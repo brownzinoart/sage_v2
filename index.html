@@ -1,0 +1,63 @@
+
+<!--
+  Copyright (c) 2025-2026 One Block Away LLC
+  All rights reserved. Proprietary and confidential.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sage Dispensary Guide</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="script.js"></script>
+</head>
+<body>
+  <!-- Ambient video background -->
+  <video class="video-bg" autoplay muted loop playsinline>
+    <source src="buddha-bg.mp4" type="video/mp4">
+  </video>
+  
+  <div class="container">
+    <h1 class="logo">Sage</h1>
+    <p class="subtext">Powered by [Dispensary Name]</p>
+
+    <div class="intro-section">
+      <h2 class="intro-title">Your Cannabis Knowledge Companion</h2>
+      <p class="intro-description">Tell us your experience level to get personalized recommendations and education tailored for you.</p>
+    </div>
+
+    <div class="experience-selector">
+      <button>New</button>
+      <button>Casual</button>
+      <button>Experienced</button>
+    </div>
+
+    <div class="input-guidance">
+      <p class="guidance-text">Ask me anything about cannabis – effects, strains, dosing, products, or general questions. We're here to help!</p>
+    </div>
+
+    <input type="text" placeholder="Never been to a dispensary before..." class="prompt-input" />
+    <button class="ask-btn">Ask Sage</button>
+
+    <div class="benefits-section">
+      <div class="benefit-item">
+        <div class="benefit-icon">📚</div>
+        <span class="benefit-text">Research-Based</span>
+      </div>
+      <div class="benefit-item">
+        <div class="benefit-icon">🎯</div>
+        <span class="benefit-text">No Pressure</span>
+      </div>
+      <div class="benefit-item">
+        <div class="benefit-icon">✨</div>
+        <span class="benefit-text">Personalized</span>
+      </div>
+    </div>
+
+    <div id="results" class="results-container"></div>
+  </div>
+</body>
+</html>
