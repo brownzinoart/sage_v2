@@ -968,11 +968,11 @@ body {
 .enhanced-product-card {
   display: grid;
   grid-template-columns: 200px 1fr;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-md);
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(139, 92, 246, 0.4);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg) var(--spacing-xl);
   backdrop-filter: blur(12px);
   transition: all var(--transition-base);
   margin-bottom: var(--spacing-lg);
@@ -1102,7 +1102,7 @@ body {
 }
 
 .product-header {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
 }
 
 .product-name {
@@ -1134,7 +1134,7 @@ body {
 .potency-display {
   display: flex;
   gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
 }
 
 .potency-item {
@@ -1161,8 +1161,8 @@ body {
 }
 
 .strain-info {
-  margin-bottom: var(--spacing-md);
-  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
   background: rgba(99, 102, 241, 0.1);
   border-radius: var(--radius-sm);
   display: inline-block;
@@ -1184,7 +1184,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-xs);
 }
 
 .effect-tag {
@@ -1201,8 +1201,8 @@ body {
 .product-description {
   color: var(--color-subtle);
   font-size: var(--font-size-xs);
-  line-height: 1.5;
-  margin-bottom: var(--spacing-md);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-xs);
 }
 
 /* Why This Works Section */
@@ -1210,8 +1210,8 @@ body {
   background: linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(160, 82, 45, 0.1));
   border: 1px solid rgba(139, 69, 19, 0.2);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-top: var(--spacing-sm);
 }
 
 .why-header {

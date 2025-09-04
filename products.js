@@ -422,6 +422,7 @@ class ProductsPageHandler {
     sessionStorage.removeItem('sageResponse');
     window.location.href = 'index.html';
   }
+
 }
 
 // Initialize when DOM is loaded
