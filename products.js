@@ -71,32 +71,114 @@ class ProductsPageHandler {
   }
 
   populatePersonalizedRecommendations() {
-    const data = this.responseData.personalizedRecommendations;
-    if (!data) return;
+    // Now using the AI-generated response (cannabisScience) for personalized section
+    const aiResponse = this.responseData.cannabisScience;
+    if (!aiResponse) return;
 
-    // Update intro text
-    const sectionIntro = document.querySelector('.personalized-recommendations .section-intro');
-    if (sectionIntro) {
-      sectionIntro.textContent = data.intro;
+    // Parse AI response into structured sections for better readability
+    const sections = this.parseAIResponseForPersonalized(aiResponse);
+
+    // Update summary text
+    const summaryText = document.querySelector('.summary-text');
+    if (summaryText) {
+      summaryText.textContent = sections.summary || aiResponse.substring(0, 200) + '...';
     }
 
-    // Update details
-    const thcDetail = document.querySelector('.thc-detail');
-    const cbdDetail = document.querySelector('.cbd-detail');
-    const matchDetail = document.querySelector('.match-detail');
-    const whyDetail = document.querySelector('.why-detail');
+    // Update highlight sections with age-inclusive language
+    const highlights = document.querySelectorAll('.highlight-text');
+    if (highlights.length >= 3) {
+      highlights[0].textContent = sections.whyThisWorks || this.getAgeInclusiveFallback('whyThisWorks');
+      highlights[1].textContent = sections.whatToExpect || this.getAgeInclusiveFallback('whatToExpect');
+      highlights[2].textContent = sections.gettingStarted || this.getAgeInclusiveFallback('gettingStarted');
+    }
+  }
 
-    if (thcDetail) thcDetail.textContent = data.thcLevel;
-    if (cbdDetail) cbdDetail.textContent = data.cbdContent;
-    if (matchDetail) matchDetail.textContent = data.bestMatch;
-    if (whyDetail) whyDetail.textContent = data.whyTheseWork;
+  parseAIResponseForPersonalized(response) {
+    // Smart parsing of AI response to extract key sections
+    const sections = {
+      summary: '',
+      whyThisWorks: '',
+      whatToExpect: '',
+      gettingStarted: ''
+    };
+
+    // Extract first 1-2 sentences as summary
+    const sentences = response.split('. ');
+    sections.summary = sentences.slice(0, 2).join('. ') + '.';
+
+    // Look for key phrases to populate sections
+    if (response.toLowerCase().includes('because') || response.toLowerCase().includes('since')) {
+      sections.whyThisWorks = this.extractSentencesContaining(response, ['because', 'since', 'reason']);
+    }
+    
+    if (response.toLowerCase().includes('expect') || response.toLowerCase().includes('feel')) {
+      sections.whatToExpect = this.extractSentencesContaining(response, ['expect', 'feel', 'experience']);
+    }
+
+    if (response.toLowerCase().includes('start') || response.toLowerCase().includes('begin')) {
+      sections.gettingStarted = this.extractSentencesContaining(response, ['start', 'begin', 'first']);
+    }
+
+    return sections;
+  }
+
+  extractSentencesContaining(text, keywords) {
+    const sentences = text.split('. ');
+    const matches = sentences.filter(sentence => 
+      keywords.some(keyword => sentence.toLowerCase().includes(keyword))
+    );
+    return matches.length > 0 ? matches[0] + '.' : '';
+  }
+
+  getAgeInclusiveFallback(section) {
+    // Age-inclusive fallback content with confidence-building language
+    const fallbacks = {
+      whyThisWorks: "These products are carefully chosen based on your specific needs and experience level. Many people find this approach helps them feel more confident about their choices.",
+      whatToExpect: "You can expect gentle, predictable effects that work well for your situation. It's normal to feel curious or even a bit nervous - that's completely okay.",
+      gettingStarted: "Start slow and go at your own pace. There's no rush, and you're in complete control. Many people find it helpful to begin on a day when you have no other commitments."
+    };
+    return fallbacks[section] || "We're here to support you every step of the way.";
   }
 
   populateCannabisScience() {
-    const scienceExplanation = document.querySelector('.science-explanation');
-    if (scienceExplanation && this.responseData.cannabisScience) {
-      scienceExplanation.textContent = this.responseData.cannabisScience;
+    // Now using the structured personalizedRecommendations data for science section
+    const data = this.responseData.personalizedRecommendations;
+    if (!data) return;
+
+    // Update THC badge
+    const thcValue = document.querySelector('.thc-value');
+    if (thcValue) {
+      thcValue.textContent = data.thcLevel || 'N/A';
     }
+
+    // Update CBD badge
+    const cbdValue = document.querySelector('.cbd-value');
+    if (cbdValue) {
+      cbdValue.textContent = data.cbdContent || 'N/A';
+    }
+
+    // Update strain match
+    const strainMatch = document.querySelector('.strain-match');
+    if (strainMatch) {
+      strainMatch.textContent = data.bestMatch || 'Loading...';
+    }
+
+    // Update scientific reasoning
+    const scientificReasoning = document.querySelector('.scientific-reasoning');
+    if (scientificReasoning) {
+      // Make the "why these work" explanation more scientific and educational
+      const reasoning = data.whyTheseWork || 'Based on the chemical profile and your needs.';
+      scientificReasoning.textContent = this.makeMoreScientific(reasoning);
+    }
+  }
+
+  makeMoreScientific(explanation) {
+    // Add scientific context to make explanations more educational
+    if (!explanation) return 'Chemical compounds interact with your endocannabinoid system to produce targeted effects.';
+    
+    // Add scientific framing to the explanation
+    const scientificIntro = 'The cannabinoid profile works because ';
+    return scientificIntro + explanation.toLowerCase();
   }
 
   populateConsumptionDosing() {
@@ -220,6 +302,12 @@ class ProductsPageHandler {
     if (price) {
       price.textContent = product.price;
     }
+    
+    // Update price in CTA button
+    const ctaBtn = card.querySelector('.get-product-btn');
+    if (ctaBtn && product.price) {
+      ctaBtn.textContent = `Get This Product (${product.price})`;
+    }
 
     // Update availability
     const availability = card.querySelector('.availability');
@@ -228,13 +316,33 @@ class ProductsPageHandler {
       availability.className = `availability ${product.availability.toLowerCase().replace(' ', '-')}`;
     }
 
-    // Make View at Dispensary button functional
+    // Make CTA buttons functional
+    const getProdBtn = card.querySelector('.get-product-btn');
+    if (getProdBtn && product.dispensaryUrl) {
+      getProdBtn.onclick = () => {
+        window.open(product.dispensaryUrl, '_blank');
+      };
+      getProdBtn.disabled = false;
+    }
+    
+    const saveBtn = card.querySelector('.save-later-btn');
+    if (saveBtn) {
+      saveBtn.onclick = () => {
+        // Add to favorites/saved items functionality
+        console.log('Save product for later:', product.name);
+        saveBtn.textContent = 'Saved ✓';
+        setTimeout(() => {
+          saveBtn.textContent = 'Save for Later';
+        }, 2000);
+      };
+    }
+
+    // Legacy support - keep existing button working
     const dispensaryBtn = card.querySelector('.view-at-dispensary-btn');
     if (dispensaryBtn && product.dispensaryUrl) {
       dispensaryBtn.onclick = () => {
         window.open(product.dispensaryUrl, '_blank');
       };
-      // Remove disabled state if it exists
       dispensaryBtn.disabled = false;
     }
   }

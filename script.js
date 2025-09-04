@@ -233,13 +233,20 @@ class SageFormHandler {
         this.sageAPI.getProductRecommendations(userInput, experienceLevel)
       ]);
 
-      // Store data for products page
+      // Get demo data structure for this experience level to use as template
+      const demoData = this.sageAPI.getDemoData(experienceLevel);
+      
+      // Store data for products page using demo structure but with real AI response
       const responseData = {
         userInput,
         experienceLevel,
         aiResponse,
         benefits,
         products,
+        // Add the structured data that the frontend expects - use real AI response for cannabisScience
+        personalizedRecommendations: demoData.personalizedRecommendations,
+        cannabisScience: aiResponse, // Use the actual AI response here instead of demo data
+        consumptionDosing: demoData.consumptionDosing,
         timestamp: Date.now(),
         isDemo: false
       };
@@ -268,6 +275,10 @@ class SageFormHandler {
       aiResponse: demoData.aiResponse,
       benefits: demoData.benefits,
       products: demoData.products,
+      // Add the structured data that the frontend expects
+      personalizedRecommendations: demoData.personalizedRecommendations,
+      cannabisScience: demoData.cannabisScience,
+      consumptionDosing: demoData.consumptionDosing,
       timestamp: Date.now(),
       isDemo: true
     };
