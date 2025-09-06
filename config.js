@@ -4,61 +4,77 @@
  */
 
 // Configuration loader for browser environment
-// Since browsers can't access .env files directly, we'll provide multiple ways to set the API key
+// Configuration for Ollama MCP server connection
 
 class Config {
   constructor() {
     this.config = {
-      TOGETHER_API_KEY: null
+      OLLAMA_HOST: 'http://localhost:11435'  // CORS proxy port
     };
     this.loadConfig();
   }
 
   loadConfig() {
-    // Method 1: Use the API key from your .env file directly
-    const envApiKey = 'tgp_v1_WpkTEjIAfquehlTRCZohkRxJbI7kf-ku5XsBkw_G1BQ';
-    if (envApiKey) {
-      this.config.TOGETHER_API_KEY = envApiKey;
-      // Save to localStorage for consistency
-      localStorage.setItem('TOGETHER_API_KEY', envApiKey);
-      return;
-    }
-
-    // Method 2: Check if key is set in localStorage (for persistence)
-    const storedKey = localStorage.getItem('TOGETHER_API_KEY');
-    if (storedKey) {
-      this.config.TOGETHER_API_KEY = storedKey;
-      return;
-    }
-
-    // Method 3: Check URL parameters (for testing)
+    console.log('=== LOADING CONFIG ===');
+    
+    // Method 1: Check URL parameters first (for testing)
     const urlParams = new URLSearchParams(window.location.search);
-    const urlKey = urlParams.get('api_key');
-    if (urlKey) {
-      this.config.TOGETHER_API_KEY = urlKey;
-      // Optionally save to localStorage
-      localStorage.setItem('TOGETHER_API_KEY', urlKey);
+    const urlHost = urlParams.get('host');
+    if (urlHost) {
+      console.log('Using URL parameter host:', urlHost);
+      this.config.OLLAMA_HOST = urlHost;
+      localStorage.setItem('OLLAMA_HOST', urlHost);
       return;
     }
 
-    // Method 4: Prompt user for API key if not found (fallback)
-    this.promptForApiKey();
+    // Method 2: Check if host is set in localStorage BUT only if it's the proxy port
+    const storedHost = localStorage.getItem('OLLAMA_HOST');
+    if (storedHost) {
+      console.log('Found stored host:', storedHost);
+      
+      // Only use stored host if it's the CORS proxy port (11435) or a custom URL
+      if (storedHost.includes(':11435') || (!storedHost.includes(':11434') && storedHost.startsWith('http'))) {
+        console.log('Using valid stored host:', storedHost);
+        this.config.OLLAMA_HOST = storedHost;
+        return;
+      } else {
+        console.warn('Stored host is old direct Ollama URL, clearing and using proxy:', storedHost);
+        localStorage.removeItem('OLLAMA_HOST');
+      }
+    }
+
+    // Method 3: Use environment variable (usually not available in browser)
+    try {
+      const envHost = typeof process !== 'undefined' && process.env ? process.env.OLLAMA_HOST : null;
+      if (envHost) {
+        console.log('Using environment host:', envHost);
+        this.config.OLLAMA_HOST = envHost;
+        localStorage.setItem('OLLAMA_HOST', envHost);
+        return;
+      }
+    } catch (e) {
+      // Skip environment variable check in browser
+    }
+
+    // Default to localhost:11435 (CORS proxy) - force this to be used
+    console.log('Using default CORS proxy host:', this.config.OLLAMA_HOST);
+    localStorage.setItem('OLLAMA_HOST', this.config.OLLAMA_HOST);
   }
 
-  promptForApiKey() {
-    const key = prompt(
-      'Please enter your Together.ai API key:\n\n' +
-      '1. Get your key from: https://api.together.xyz/settings/api-keys\n' +
-      '2. Or set it in the .env file: TOGETHER_API_KEY=your_key\n' +
-      '3. Or add ?api_key=your_key to the URL\n\n' +
-      'API Key:'
+  promptForHost() {
+    const host = prompt(
+      'Please enter your Ollama server URL:\n\n' +
+      '1. Default: http://localhost:11434\n' +
+      '2. Or set it in the .env file: OLLAMA_HOST=your_host\n' +
+      '3. Or add ?host=your_host to the URL\n\n' +
+      'Ollama Host:'
     );
     
-    if (key && key.trim()) {
-      this.config.TOGETHER_API_KEY = key.trim();
-      localStorage.setItem('TOGETHER_API_KEY', key.trim());
+    if (host && host.trim()) {
+      this.config.OLLAMA_HOST = host.trim();
+      localStorage.setItem('OLLAMA_HOST', host.trim());
     } else {
-      console.warn('No API key provided. AI features will not work.');
+      console.warn('Using default Ollama host:', this.config.OLLAMA_HOST);
     }
   }
 
@@ -68,18 +84,18 @@ class Config {
 
   set(key, value) {
     this.config[key] = value;
-    if (key === 'TOGETHER_API_KEY') {
-      localStorage.setItem('TOGETHER_API_KEY', value);
+    if (key === 'OLLAMA_HOST') {
+      localStorage.setItem('OLLAMA_HOST', value);
     }
   }
 
-  hasApiKey() {
-    return !!(this.config.TOGETHER_API_KEY && this.config.TOGETHER_API_KEY.length > 10);
+  hasOllamaConnection() {
+    return !!(this.config.OLLAMA_HOST && this.config.OLLAMA_HOST.startsWith('http'));
   }
 
-  clearApiKey() {
-    this.config.TOGETHER_API_KEY = null;
-    localStorage.removeItem('TOGETHER_API_KEY');
+  clearHost() {
+    this.config.OLLAMA_HOST = 'http://localhost:11435';  // CORS proxy port
+    localStorage.removeItem('OLLAMA_HOST');
   }
 }
 

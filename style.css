@@ -1362,7 +1362,7 @@ body {
   color: #ff4757;
   text-align: center;
   margin: 0 0 var(--spacing-xl) 0;
-  text-transform: lowercase;
+  text-transform: none;
 }
 
 /* Subsections Grid */
@@ -2350,4 +2350,98 @@ body {
   .bridge-text {
     font-size: var(--font-size-base);
   }
+}
+
+/* Experience-Level Adaptive Styling */
+/* Using existing design tokens for consistent experience */
+
+/* Beginner Experience Level - More spacious, warmer, clearer */
+.main-response-card.experience-new {
+  padding: var(--spacing-2xl);
+}
+
+.main-response-card.experience-new .section-content {
+  line-height: 1.8;
+  font-size: var(--font-size-lg);
+}
+
+.main-response-card.experience-new .section-title {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.main-response-card.experience-new .guidance-section {
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-xl);
+}
+
+/* Casual Experience Level - Balanced design, moderate information density */
+.main-response-card.experience-casual {
+  padding: var(--spacing-xl);
+}
+
+.main-response-card.experience-casual .section-content {
+  line-height: 1.6;
+  font-size: var(--font-size-base);
+}
+
+.main-response-card.experience-casual .section-title {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.main-response-card.experience-casual .guidance-section {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+}
+
+/* Experienced Experience Level - Compact layout, higher information density */
+.main-response-card.experience-experienced {
+  padding: var(--spacing-lg);
+}
+
+.main-response-card.experience-experienced .section-content {
+  line-height: 1.5;
+  font-size: var(--font-size-base);
+}
+
+.main-response-card.experience-experienced .section-title {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.main-response-card.experience-experienced .guidance-section {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+}
+
+/* Section-specific adaptations using existing tokens */
+.experience-new .introduction-content,
+.experience-new .core-topic-content,
+.experience-new .why-content,
+.experience-new .expect-content,
+.experience-new .started-content {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  border-left: 3px solid var(--color-accent);
+}
+
+.experience-casual .introduction-content,
+.experience-casual .core-topic-content,
+.experience-casual .why-content,
+.experience-casual .expect-content,
+.experience-casual .started-content {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+}
+
+.experience-experienced .introduction-content,
+.experience-experienced .core-topic-content,
+.experience-experienced .why-content,
+.experience-experienced .expect-content,
+.experience-experienced .started-content {
+  padding: var(--spacing-sm);
+  font-weight: 500;
+  color: var(--color-fg);
 }

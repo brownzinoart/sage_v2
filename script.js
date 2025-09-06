@@ -177,6 +177,8 @@ class SageFormHandler {
   constructor() {
     this.sageAPI = new SageAPI();
     this.experienceSelector = null;
+    this._progressTimers = [];
+    this._progressTicker = null;
     this.init();
   }
 
@@ -222,38 +224,59 @@ class SageFormHandler {
     this.setLoadingState(askButton, true);
     
     try {
-      // Test API connectivity first
-      const connectivity = await this.sageAPI.testConnection();
-      console.log('API connectivity:', connectivity);
+      console.log(`=== STARTING REQUEST FLOW ===`);
+      console.log(`Input: "${userInput}"`);
+      console.log(`Experience: ${experienceLevel}`);
+      
+      // EMERGENCY BYPASS: Skip API connectivity test
+      console.log('EMERGENCY MODE: Bypassing API connectivity test');
       
       // Generate AI response and get recommendations
+      console.log('Starting parallel API calls...');
       const [aiResponse, benefits, products] = await Promise.all([
         this.sageAPI.generateResponse(userInput, experienceLevel),
         this.sageAPI.getBenefitsForExperience(experienceLevel),
         this.sageAPI.getProductRecommendations(userInput, experienceLevel)
       ]);
 
+      console.log(`=== API RESPONSES RECEIVED ===`);
+      console.log(`AI Response type: ${typeof aiResponse}`);
+      console.log(`AI Response length: ${aiResponse?.length || 'N/A'}`);
+      console.log(`AI Response preview: ${aiResponse?.substring(0, 100) || 'N/A'}...`);
+      console.log(`Benefits count: ${benefits?.length || 'N/A'}`);
+      console.log(`Products count: ${products?.length || 'N/A'}`);
+
       // Get demo data structure for this experience level to use as template
       const demoData = this.sageAPI.getDemoData(experienceLevel);
       
-      // Store data for products page using demo structure but with real AI response
+      // Store data for products page - simplified structure for new MVP flow
       const responseData = {
         userInput,
         experienceLevel,
-        aiResponse,
+        aiResponse, // This is the structured MCP response
         benefits,
         products,
-        // Add the structured data that the frontend expects - use real AI response for cannabisScience
-        personalizedRecommendations: demoData.personalizedRecommendations,
-        cannabisScience: aiResponse, // Use the actual AI response here instead of demo data
-        consumptionDosing: demoData.consumptionDosing,
         timestamp: Date.now(),
         isDemo: false
       };
       
+      console.log(`=== STORING IN SESSION STORAGE ===`);
+      console.log('Response data structure:', {
+        userInput: responseData.userInput,
+        experienceLevel: responseData.experienceLevel,
+        aiResponseLength: responseData.aiResponse?.length || 'N/A',
+        benefitsCount: responseData.benefits?.length || 'N/A',
+        productsCount: responseData.products?.length || 'N/A',
+        isDemo: responseData.isDemo
+      });
+      
       sessionStorage.setItem('sageResponse', JSON.stringify(responseData));
+      console.log('Session storage updated successfully');
       
       // Navigate to products page
+      console.log('Navigating to products.html...');
+      // Stop progress hints before navigating
+      this.setLoadingState(askButton, false);
       window.location.href = 'products.html';
       
     } catch (error) {
@@ -294,10 +317,12 @@ class SageFormHandler {
       button.classList.add('loading');
       button.textContent = 'Thinking...';
       button.disabled = true;
+      this.startProgressHints(button);
     } else {
       button.classList.remove('loading');
       button.textContent = 'Ask Sage';
       button.disabled = false;
+      this.stopProgressHints();
     }
   }
 
@@ -336,6 +361,58 @@ class SageFormHandler {
   setExperienceSelector(selector) {
     this.experienceSelector = selector;
   }
+
+  // Progress hint helpers
+  startProgressHints(button) {
+    // Clear any existing timers just in case
+    this.stopProgressHints();
+
+    // Animated ellipsis on the current label
+    let dots = 0;
+    const baseText = () => button.textContent.replace(/\.*$/, '');
+    this._progressTicker = setInterval(() => {
+      dots = (dots + 1) % 4; // 0..3 dots
+      const txt = baseText();
+      button.textContent = `${txt}${'.'.repeat(dots)}`;
+    }, 500);
+
+    // Staged, reassuring messages over time
+    const stages = [
+      { t: 8000,  text: 'Still thinking — gathering details' },
+      { t: 20000, text: 'Analyzing your request' },
+      { t: 35000, text: 'Composing recommendations' },
+      { t: 55000, text: 'Almost there — finalizing' },
+      { t: 90000, text: 'Big question — taking a bit longer' },
+      { t: 120000, text: 'Thanks for your patience — refining results' }
+    ];
+
+    stages.forEach(stage => {
+      const id = setTimeout(() => {
+        // Preserve current dots animation; replace the base label
+        dots = 0;
+        button.textContent = stage.text + '...';
+      }, stage.t);
+      this._progressTimers.push(id);
+    });
+  }
+
+  stopProgressHints() {
+    if (this._progressTicker) {
+      clearInterval(this._progressTicker);
+      this._progressTicker = null;
+    }
+    this._progressTimers.forEach(id => clearTimeout(id));
+    this._progressTimers = [];
+  }
+
+  // Background warm-up to reduce first-call latency
+  async warmUpModel() {
+    try {
+      await this.sageAPI.warmUp();
+    } catch (_) {
+      // Silent: warm-up is best effort
+    }
+  }
 }
 
 // Initialize when DOM is loaded
@@ -351,6 +428,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize form handler
   const formHandler = new SageFormHandler();
   formHandler.setExperienceSelector(experienceSelector);
+  // Kick off a background warm-up (best effort)
+  formHandler.warmUpModel();
   
   // Configure video background
   const video = document.querySelector('.video-bg');

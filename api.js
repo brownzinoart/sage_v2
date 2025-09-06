@@ -3,24 +3,21 @@
  * All rights reserved. Proprietary and confidential.
  */
 
-// Together.ai API Configuration
+// Ollama MCP API Configuration
 const API_CONFIG = {
-  together: {
-    baseUrl: 'https://api.together.xyz/v1/chat/completions',
-    timeout: 30000,
+  ollama: {
+    // Base timeout used as a floor; per-attempt timeouts below may exceed this
+    timeout: 120000,
     models: {
-      // Budget-friendly models (best bang for buck)
-      llama32_3b: 'meta-llama/Llama-3.2-3B-Instruct-Turbo',  // $0.06/1M - BEST VALUE
-      llama3_8b: 'meta-llama/Llama-3-8B-Instruct-Lite',      // $0.10/1M - GOOD VALUE
-      
-      // Affordable alternatives  
-      mistral_7b: 'mistralai/Mistral-7B-Instruct-v0.1',      // $0.20/1M
-      qwen25_7b: 'Qwen/Qwen2.5-7B-Instruct-Turbo',          // $0.30/1M
-      
-      // Premium models (for comparison)
-      llama2_70b: 'meta-llama/Llama-2-70b-chat-hf',         // Higher cost
-      mixtral_8x7b: 'mistralai/Mixtral-8x7B-Instruct-v0.1'  // Higher cost
-    }
+      // Primary model for experience-level filtering
+      qwen2_5_14b: 'qwen2.5:14b-instruct',     // Best for instruction following
+      mistral: 'mistral:latest',                // General purpose backup
+      deepseek_coder_16b: 'deepseek-coder-v2:16b', // Coding tasks
+      deepseek_coder_33b: 'deepseek-coder:33b',    // Complex coding
+      llava: 'llava:latest'                     // Vision tasks
+    },
+    // Default model for cannabis guidance
+    defaultModel: 'qwen2.5:14b-instruct'
   }
 };
 
@@ -111,118 +108,312 @@ const EXPERIENCE_BENEFITS = {
 
 class SageAPI {
   constructor() {
-    this.preferredModel = 'llama'; // 'llama' or 'mistral'
+    this.preferredModel = API_CONFIG.ollama.defaultModel;
   }
 
-  // Generate AI response using Together.ai
+  // Generate AI response using Ollama MCP server
   async generateResponse(userInput, experienceLevel, useModel = null) {
+    console.log(`=== GENERATING RESPONSE ===`);
+    console.log(`User Input: "${userInput}"`);
+    console.log(`Experience Level: ${experienceLevel}`);
+    
     try {
-      // Check if API key is available
-      if (!window.Config || !window.Config.hasApiKey()) {
-        throw new Error('Together.ai API key not configured');
+      // Check if Ollama connection is available
+      if (!window.Config || !window.Config.hasOllamaConnection()) {
+        console.error('Ollama connection not available');
+        throw new Error('Ollama connection not configured');
       }
 
-      const prompt = this.buildPrompt(userInput, experienceLevel);
-      const modelToUse = this.getModel(useModel);
+      const ollamaHost = window.Config.get('OLLAMA_HOST');
+      console.log(`=== CONFIGURATION CHECK ===`);
+      console.log(`Ollama host: ${ollamaHost}`);
+      console.log(`Is proxy URL (11435): ${ollamaHost.includes('11435')}`);
+      console.log(`Is direct URL (11434): ${ollamaHost.includes('11434')}`);
+
+      // EMERGENCY BYPASS: Skip connection test to isolate the issue
+      console.log('EMERGENCY MODE: Bypassing connection test');
+      console.log('Proceeding directly to main API call...');
+
+      const prompt = this.buildExperienceLevelPrompt(userInput, experienceLevel);
+      const modelToUse = useModel || this.preferredModel;
       
-      return await this.callTogetherAI(prompt, modelToUse);
+      console.log(`Using model: ${modelToUse}`);
+      console.log(`Prompt length: ${prompt.length} chars`);
+      
+      const response = await this.callOllama(prompt, modelToUse);
+      console.log(`=== OLLAMA RESPONSE RECEIVED ===`);
+      console.log(`Response length: ${response.length} chars`);
+      console.log(`Response preview: ${response.substring(0, 200)}...`);
+      
+      return response;
     } catch (error) {
-      console.error('Error generating response:', error);
+      console.error('=== ERROR GENERATING RESPONSE ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error.message);
+      console.error('Stack:', error.stack);
       
       // Return fallback response for demo purposes
+      console.warn('Falling back to generic response');
       return this.getFallbackResponse(userInput, experienceLevel);
     }
   }
 
+  // Lightweight background warm-up to load the model into memory sooner
+  async warmUp() {
+    try {
+      if (!window.Config || !window.Config.hasOllamaConnection()) return;
+      const ollamaHost = window.Config.get('OLLAMA_HOST');
+      const model = API_CONFIG.ollama.defaultModel;
+      // Quick probe to avoid wasting time if proxy/server is down
+      await (async () => {
+        if (typeof AbortController === 'undefined') return;
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), 3000);
+        try {
+          await fetch(`${ollamaHost}/api/tags`, { signal: controller.signal });
+        } finally {
+          clearTimeout(t);
+        }
+      })().catch(() => { throw new Error('Probe failed'); });
+      const requestBody = {
+        model,
+        prompt: 'Respond with exactly: WARMUP',
+        stream: false,
+        options: { temperature: 0.0 }
+      };
+
+      const url = `${ollamaHost}/api/generate`;
+      if (typeof AbortController !== 'undefined') {
+        const controller = new AbortController();
+        const timeoutMs = 6000; // best-effort: 6s
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+            signal: controller.signal
+          });
+        } finally {
+          clearTimeout(timer);
+        }
+      } else {
+        // Fallback without abort
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+      }
+    } catch (_) {
+      // Silent failure: warm-up is opportunistic
+    }
+  }
+
   getModel(preferredModel) {
-    const models = API_CONFIG.together.models;
+    const models = API_CONFIG.ollama.models;
     
-    if (preferredModel === 'mistral' || this.preferredModel === 'mistral') {
-      return models.mistral_7b; // Use budget-friendly Mistral 7B ($0.20/1M)
-    } else {
-      return models.llama32_3b; // Default to BEST VALUE Llama 3.2 3B ($0.06/1M)
+    if (preferredModel && models[preferredModel]) {
+      return models[preferredModel];
     }
+    
+    // Default to qwen2.5:14b-instruct for cannabis guidance
+    return API_CONFIG.ollama.defaultModel;
   }
 
-  buildPrompt(userInput, experienceLevel) {
-    const experienceContext = {
-      new: "The user is new to cannabis and needs gentle, educational guidance with safety as the top priority.",
-      casual: "The user has some cannabis experience and is looking to enhance their knowledge and discover new products.",
-      experienced: "The user is experienced with cannabis and interested in advanced insights, optimization, and premium products."
-    };
-
-    return `You are Sage, a knowledgeable and friendly cannabis educator working with dispensary customers. 
-
-User Experience Level: ${experienceLevel}
-Context: ${experienceContext[experienceLevel] || experienceContext.casual}
-
-User Question: "${userInput}"
-
-Please provide a helpful, informative response that:
-1. Directly addresses their question in natural, conversational language
-2. Considers their experience level
-3. Includes specific, actionable advice
-4. Maintains a warm, educational tone
-5. Prioritizes safety and responsible use
-
-Keep your response focused, practical, and around 2-3 paragraphs.`;
-  }
-
-  async callTogetherAI(prompt, model) {
-    const apiKey = window.Config.get('TOGETHER_API_KEY');
-    
-    if (!apiKey) {
-      throw new Error('Together.ai API key not found');
-    }
-
-    const response = await fetch(API_CONFIG.together.baseUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+  buildExperienceLevelPrompt(userInput, experienceLevel) {
+    const experienceInstructions = {
+      new: {
+        tone: "gentle, educational, safety-first",
+        language: "simple terms, avoid jargon, use analogies",
+        depth: "basic concepts, step-by-step guidance, emphasis on starting small",
+        approach: "reassuring, warm, thorough explanations of what to expect"
       },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are Sage, a helpful cannabis education assistant.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 500,
+      casual: {
+        tone: "friendly expert, balanced and practical",
+        language: "mix of simple and technical terms, relatable examples", 
+        depth: "moderate detail, practical focus, some scientific backing",
+        approach: "informative, engaging, build on existing knowledge"
+      },
+      experienced: {
+        tone: "authoritative, comprehensive, efficient",
+        language: "technical terminology, precise scientific language",
+        depth: "detailed cannabinoid profiles, complex interactions, multiple perspectives (science/exploration/quality)",
+        approach: "dense information, nuanced recommendations, advanced concepts"
+      }
+    };
+    
+    const instruction = experienceInstructions[experienceLevel] || experienceInstructions.casual;
+    
+    return `You are THE definitive cannabis expert and authority. A user with ${experienceLevel} experience asks: "${userInput}"
+
+User Experience Level: ${experienceLevel.toUpperCase()}
+
+Adapt your response with these characteristics:
+- Tone: ${instruction.tone}
+- Language: ${instruction.language}
+- Information Depth: ${instruction.depth}
+- Approach: ${instruction.approach}
+
+CRITICAL: Structure your response in exactly these 5 sections using these markers:
+
+[INTRODUCTION]
+Brief personalized greeting and acknowledgment of their question, adapted to their experience level.
+
+[CORE_TOPIC]
+Comprehensive exploration of their question/topic. This is your main educational content with depth matching their experience level.
+
+[WHY_THIS_WORKS]
+Explain the scientific/practical reasoning behind your recommendations, adapted to their knowledge level.
+
+[WHAT_TO_EXPECT]
+Specific outcomes, timelines, and effects they should expect, with complexity matching their experience.
+
+[GETTING_STARTED]
+Concrete action steps and implementation guidance, tailored to their experience level.
+
+Each section should be 2-4 sentences and provide authoritative, clinical-grade guidance. Be specific about strains, dosages, and mechanisms. Write with confidence - no hedging or uncertainty.`;
+  }
+
+  async callOllama(prompt, model) {
+    const ollamaHost = window.Config.get('OLLAMA_HOST');
+    
+    console.log(`=== CALLING OLLAMA API ===`);
+    console.log(`Host: ${ollamaHost}`);
+    console.log(`Model: ${model}`);
+    console.log(`🚨 CRITICAL: callOllama method is being executed! 🚨`);
+    
+    if (!ollamaHost) {
+      throw new Error('Ollama host not found');
+    }
+
+    const requestBody = {
+      model: model,
+      prompt: prompt,
+      stream: false,
+      options: {
         temperature: 0.7,
         top_p: 0.9,
-        repetition_penalty: 1.1
-      }),
-      signal: AbortSignal.timeout(API_CONFIG.together.timeout)
+        top_k: 40,
+        repeat_penalty: 1.1
+      }
+    };
+
+    console.log('Request body:', {
+      model: requestBody.model,
+      promptLength: requestBody.prompt.length,
+      stream: requestBody.stream,
+      options: requestBody.options
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Together.ai API error:', response.status, errorText);
-      throw new Error(`Together.ai API error: ${response.status} - ${errorText}`);
+    // Retry with progressive timeouts to handle cold starts and heavy prompts
+    const attemptTimeouts = [60000, 120000, 240000]; // 1 min, 2 min, 4 min
+    const maxAttempts = attemptTimeouts.length;
+
+    const doFetchWithTimeout = async (timeoutMs) => {
+      // Prefer AbortController for true cancellation; fall back to Promise.race if unavailable
+      const url = `${ollamaHost}/api/generate`;
+      if (typeof AbortController !== 'undefined') {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+            signal: controller.signal
+          });
+          clearTimeout(timer);
+          return response;
+        } catch (err) {
+          clearTimeout(timer);
+          throw err;
+        }
+      } else {
+        // Legacy fallback
+        const fetchPromise = fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), timeoutMs);
+        });
+        return Promise.race([fetchPromise, timeoutPromise]);
+      }
+    };
+
+    let lastError = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const timeoutMs = attemptTimeouts[attempt - 1];
+      try {
+        console.log(`🚨 Attempt ${attempt}/${maxAttempts} → ${ollamaHost}/api/generate (timeout ${Math.round(timeoutMs/1000)}s)`);
+        const response = await doFetchWithTimeout(timeoutMs);
+        console.log(`🚨 FETCH COMPLETED (attempt ${attempt}) WITH STATUS: ${response.status}`);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Ollama API error response:', errorText);
+          throw new Error(`Ollama API error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Raw response data:', data);
+        if (!data.response) {
+          console.error('Missing response field in data:', data);
+          throw new Error('Invalid response format from Ollama - missing response field');
+        }
+
+        console.log(`=== OLLAMA SUCCESS (attempt ${attempt}) ===`);
+        console.log(`Response length: ${data.response.length}`);
+        return data.response;
+      } catch (fetchError) {
+        lastError = fetchError;
+        console.error(`=== FETCH ERROR (attempt ${attempt}) ===`);
+        console.error('Fetch error:', fetchError);
+
+        const isAbort = fetchError?.name === 'AbortError' || /timeout/i.test(fetchError?.message || '');
+        const isNetwork = fetchError?.name === 'TypeError' && /fetch|Failed to fetch/i.test(fetchError?.message || '');
+
+        // For abort/timeout or transient network errors, backoff and retry
+        if ((isAbort || isNetwork) && attempt < maxAttempts) {
+          const backoff = 1000 * attempt; // 1s, 2s
+          console.warn(`Transient error (${isAbort ? 'timeout' : 'network'}). Retrying after ${backoff}ms...`);
+          await new Promise(r => setTimeout(r, backoff));
+          continue;
+        }
+
+        // Non-retryable or final attempt: map to friendly errors
+        if (fetchError.name === 'AbortError') {
+          throw new Error(`Ollama request timed out after ${Math.round(attemptTimeouts.slice(0, attempt).reduce((a,b)=>a+b,0)/1000)}s`);
+        } else if (fetchError.name === 'TypeError') {
+          if (fetchError.message.includes('CORS') || fetchError.message.includes('cross-origin')) {
+            throw new Error('CORS error - browser blocking cross-origin request to Ollama server');
+          } else if (fetchError.message.includes('fetch') || fetchError.message.includes('Failed to fetch')) {
+            throw new Error('Cannot connect to Ollama server - check if it is running or CORS is blocking the request');
+          } else {
+            throw new Error(`Network error: ${fetchError.message}`);
+          }
+        } else {
+          throw fetchError;
+        }
+      }
     }
 
-    const data = await response.json();
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error('Invalid response format from Together.ai');
-    }
-    
-    return data.choices[0].message.content;
+    // Should not reach here; throw the last captured error as a safeguard
+    throw lastError || new Error('Unknown error contacting Ollama');
   }
 
   getFallbackResponse(userInput, experienceLevel) {
+    // Note: This fallback is only used when Ollama is unavailable
+    console.warn('Using fallback response - Ollama server may be offline');
+    
     const fallbacks = {
-      new: "As a cannabis newcomer, I'd recommend starting with low-dose products (2.5-5mg THC) and waiting at least 2 hours between doses to see how you feel. Consider CBD-dominant products for gentler effects, and always purchase from licensed dispensaries. Don't hesitate to ask your budtender for guidance - they're there to help ensure you have a safe, positive experience.",
+      new: "Your question requires personalized cannabis guidance. Our AI system analyzes your needs to recommend specific products with precise dosing. Start with CBD-dominant options (2.5-5mg THC max) from licensed dispensaries. Our full guidance system provides detailed strain recommendations, safety protocols, and consumption methods tailored to beginners.",
       
-      casual: "Since you have some cannabis experience, you might enjoy exploring different consumption methods like vaping for quicker onset, or trying products with specific terpene profiles. Consider keeping a cannabis journal to track what works best for different situations. Remember that tolerance can change, so it's always good to start lower when trying new products.",
+      casual: "Your cannabis query needs our full recommendation engine for accurate guidance. Our system provides strain-specific recommendations, terpene profiles, and consumption timing based on your experience level. For immediate help: try indica-dominant hybrids for relaxation, sativa for energy, and always start with lower doses when trying new products.",
       
-      experienced: "For experienced users like yourself, you might be interested in exploring the entourage effect through full-spectrum products, or experimenting with minor cannabinoids like CBG or CBN. Consider rotating strains to prevent tolerance buildup, and look into craft products from premium cultivators for unique terpene profiles and effects."
+      experienced: "Your advanced cannabis query requires our comprehensive analysis system. Our platform provides detailed cannabinoid profiles, terpene interactions, minor cannabinoid recommendations (CBG, CBN, THCV), and craft cultivar suggestions. Full system access gives you precise dosing calculations, tolerance management strategies, and premium product selections."
     };
 
     return fallbacks[experienceLevel] || fallbacks.casual;
@@ -299,25 +490,43 @@ Keep your response focused, practical, and around 2-3 paragraphs.`;
     return mockProducts[experienceLevel] || mockProducts.casual;
   }
 
-  // Test API connectivity
+  // Test Ollama connectivity
   async testConnection() {
+    console.log(`=== TESTING OLLAMA CONNECTION ===`);
+    
     try {
-      if (!window.Config || !window.Config.hasApiKey()) {
-        return { together: false, error: 'API key not configured' };
+      if (!window.Config || !window.Config.hasOllamaConnection()) {
+        const error = 'Ollama connection not configured';
+        console.error(error);
+        return { ollama: false, error };
       }
 
-      // Test with a simple prompt using budget model
-      await this.callTogetherAI('Test connection', API_CONFIG.together.models.llama32_3b);
-      return { together: true };
+      const ollamaHost = window.Config.get('OLLAMA_HOST');
+      console.log(`Testing connection to: ${ollamaHost}`);
+
+      // Test with a simple prompt using default model
+      const testPrompt = 'Respond with exactly: CONNECTION TEST SUCCESSFUL';
+      const model = API_CONFIG.ollama.defaultModel;
+      console.log(`Using test model: ${model}`);
+      
+      const response = await this.callOllama(testPrompt, model);
+      console.log(`Test response received: ${response.substring(0, 100)}...`);
+      
+      const success = { ollama: true, response: response.substring(0, 100) };
+      console.log('=== CONNECTION TEST PASSED ===');
+      return success;
     } catch (error) {
-      console.warn('Together.ai connection test failed:', error.message);
-      return { together: false, error: error.message };
+      console.error('=== CONNECTION TEST FAILED ===');
+      console.error('Error:', error.message);
+      console.error('Stack:', error.stack);
+      return { ollama: false, error: error.message };
     }
   }
 
   // Set preferred model
   setPreferredModel(model) {
-    if (model === 'llama' || model === 'mistral') {
+    const availableModels = Object.values(API_CONFIG.ollama.models);
+    if (availableModels.includes(model)) {
       this.preferredModel = model;
     }
   }

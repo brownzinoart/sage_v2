@@ -25,119 +25,244 @@
       <h1 class="products-title">Sage Advice</h1>
     </div>
 
-    <!-- Personalized Guidance Section -->
-    <div class="guidance-section">
-      <!-- Main AI Response Card -->
-      <div class="main-response-card">
-        <div class="response-header">
-          <h2 class="response-heading">Your Personalized Cannabis Guidance</h2>
-        </div>
-        <div class="user-query-display">
-          <span class="query-label">Your Question:</span>
-          <span class="query-text">Loading your question...</span>
-        </div>
+    <!-- Instant Decision Section -->
+    <div class="instant-decision-section">
+      <div class="user-query-display">
+        <span class="query-label">Your Question:</span>
+        <span class="query-text">Loading your question...</span>
+      </div>
+      
+      <div class="recommendation-summary">
+        <h2 class="recommendation-text">Loading your personalized recommendation...</h2>
+        <button class="primary-decision-cta">Get Your Match - $--</button>
+      </div>
+      
+      <div class="safety-alert">
+        <div class="alert-icon">⚠️</div>
+        <span class="alert-text">Start low, go slow. Wait 2+ hours between doses.</span>
+      </div>
+    </div>
 
-        <!-- Enhanced Sections Within Main Card -->
-        <div class="guidance-sections">
-          <!-- Personalized Recommendations Section -->
-          <div class="guidance-section personalized-recommendations">
-            <div class="section-header">
-              <div class="section-icon">🌿</div>
-              <h3 class="section-title">Your Personalized Recommendations</h3>
+    <!-- Side-by-Side Product Comparison -->
+    <div class="product-comparison-section">
+      <div class="comparison-grid">
+        <!-- Product A -->
+        <div class="comparison-product" data-product-index="0">
+          <div class="product-image-container">
+            <div class="product-image-placeholder">
+              <div class="placeholder-gradient"></div>
             </div>
-            <div class="section-content">
-              <div class="personalized-guidance">
-                <div class="guidance-summary">
-                  <p class="summary-text">Loading your personalized guidance...</p>
-                </div>
-                <div class="guidance-highlights">
-                  <div class="highlight-item">
-                    <div class="highlight-icon">💡</div>
-                    <div class="highlight-content">
-                      <h4 class="highlight-title">Why This Works for You</h4>
-                      <p class="highlight-text">Loading personalized explanation...</p>
-                    </div>
-                  </div>
-                  <div class="highlight-item">
-                    <div class="highlight-icon">🎯</div>
-                    <div class="highlight-content">
-                      <h4 class="highlight-title">What to Expect</h4>
-                      <p class="highlight-text">Loading expected effects...</p>
-                    </div>
-                  </div>
-                  <div class="highlight-item">
-                    <div class="highlight-icon">🚀</div>
-                    <div class="highlight-content">
-                      <h4 class="highlight-title">Getting Started</h4>
-                      <p class="highlight-text">Loading starter tips...</p>
-                    </div>
-                  </div>
-                </div>
+            <div class="product-badges">
+              <div class="product-recommendation-badge primary-recommendation">
+                <span class="badge-icon">⭐</span>
+                <span class="badge-text">Best Match</span>
               </div>
             </div>
           </div>
-
-          <!-- Cannabis Science Section -->
-          <div class="guidance-section cannabis-science">
-            <div class="section-header">
-              <div class="section-icon">🧪</div>
-              <h3 class="section-title">Cannabis Science & Effects</h3>
+          
+          <div class="product-summary">
+            <div class="product-pricing">
+              <span class="price">$--</span>
+              <span class="availability in-stock">In Stock</span>
             </div>
-            <div class="section-content">
-              <div class="science-data">
-                <div class="data-badges">
-                  <div class="data-badge thc-badge">
-                    <div class="badge-icon">🔥</div>
-                    <div class="badge-content">
-                      <span class="badge-label">THC Level</span>
-                      <span class="badge-value thc-value">Loading...</span>
-                      <span class="badge-explanation">Psychoactive compound</span>
-                    </div>
-                  </div>
-                  <div class="data-badge cbd-badge">
-                    <div class="badge-icon">🌱</div>
-                    <div class="badge-content">
-                      <span class="badge-label">CBD Content</span>
-                      <span class="badge-value cbd-value">Loading...</span>
-                      <span class="badge-explanation">Therapeutic compound</span>
-                    </div>
-                  </div>
+            
+            <h3 class="product-name">Loading Product A...</h3>
+            
+            <div class="potency-comparison">
+              <div class="potency-large thc">
+                <span class="potency-label">THC</span>
+                <span class="potency-value">--%</span>
+              </div>
+              <div class="potency-large cbd">
+                <span class="potency-label">CBD</span>
+                <span class="potency-value">--%</span>
+              </div>
+            </div>
+            
+            <div class="effect-summary">"Loading effect summary..."</div>
+            
+            <div class="product-actions">
+              <button class="primary-cta get-product-btn">Get This ($--)</button>
+              <button class="learn-more-btn" onclick="toggleDetails(0)">Learn More ▼</button>
+            </div>
+            
+            <div class="product-details-collapsible" id="details-0" style="display: none;">
+              <div class="strain-info">
+                <span class="strain-label">Strain:</span>
+                <span class="strain-name">Loading...</span>
+              </div>
+              <div class="effects-tags">
+                <span class="effect-tag">Loading</span>
+              </div>
+              <p class="product-description">Loading product description...</p>
+              <div class="why-this-works">
+                <div class="why-header">
+                  <span class="why-icon">🎯</span>
+                  <h4>Why This Works for You</h4>
                 </div>
-                <div class="strain-analysis">
-                  <div class="analysis-item">
-                    <strong class="analysis-label">Best Strain Match:</strong>
-                    <span class="strain-match">Loading...</span>
-                  </div>
-                  <div class="analysis-item">
-                    <strong class="analysis-label">Scientific Reasoning:</strong>
-                    <span class="scientific-reasoning">Loading explanation...</span>
-                  </div>
-                </div>
+                <p class="why-explanation">Loading personalized recommendation...</p>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Consumption & Dosing Section -->
-          <div class="guidance-section consumption-dosing">
-            <div class="section-header">
-              <div class="section-icon">💊</div>
-              <h3 class="section-title">Consumption & Dosing</h3>
+        <!-- VS Divider -->
+        <div class="vs-divider">
+          <span class="vs-text">VS</span>
+        </div>
+
+        <!-- Product B -->
+        <div class="comparison-product" data-product-index="1">
+          <div class="product-image-container">
+            <div class="product-image-placeholder">
+              <div class="placeholder-gradient"></div>
             </div>
-            <div class="section-content">
-              <ol class="dosing-steps">
-                <li>Loading dosing guidelines...</li>
-              </ol>
+            <div class="product-badges">
+              <div class="product-recommendation-badge secondary-recommendation">
+                <span class="badge-icon">👥</span>
+                <span class="badge-text">Popular Choice</span>
+              </div>
             </div>
           </div>
-
-          <!-- Safety & Quality Section -->
-          <div class="guidance-section safety-quality">
-            <div class="section-header">
-              <div class="section-icon">✅</div>
-              <h3 class="section-title">Safety & Quality Assurance</h3>
+          
+          <div class="product-summary">
+            <div class="product-pricing">
+              <span class="price">$--</span>
+              <span class="availability in-stock">In Stock</span>
             </div>
-            <div class="section-content">
-              <ul class="quality-checklist">
+            
+            <h3 class="product-name">Loading Product B...</h3>
+            
+            <div class="potency-comparison">
+              <div class="potency-large thc">
+                <span class="potency-label">THC</span>
+                <span class="potency-value">--%</span>
+              </div>
+              <div class="potency-large cbd">
+                <span class="potency-label">CBD</span>
+                <span class="potency-value">--%</span>
+              </div>
+            </div>
+            
+            <div class="effect-summary">"Loading effect summary..."</div>
+            
+            <div class="product-actions">
+              <button class="primary-cta get-product-btn">Get This ($--)</button>
+              <button class="learn-more-btn" onclick="toggleDetails(1)">Learn More ▼</button>
+            </div>
+            
+            <div class="product-details-collapsible" id="details-1" style="display: none;">
+              <div class="strain-info">
+                <span class="strain-label">Strain:</span>
+                <span class="strain-name">Loading...</span>
+              </div>
+              <div class="effects-tags">
+                <span class="effect-tag">Loading</span>
+              </div>
+              <p class="product-description">Loading product description...</p>
+              <div class="why-this-works">
+                <div class="why-header">
+                  <span class="why-icon">🎯</span>
+                  <h4>Why This Works for You</h4>
+                </div>
+                <p class="why-explanation">Loading personalized recommendation...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next Steps Section -->
+    <div class="next-steps-section">
+      <h2 class="steps-heading">Your Next Steps</h2>
+      <div class="steps-grid">
+        <div class="step-item">
+          <div class="step-number">1️⃣</div>
+          <div class="step-content">
+            <h3 class="step-title">Choose Your Product</h3>
+            <p class="step-description">Select from the two products above</p>
+          </div>
+        </div>
+        
+        <div class="step-item">
+          <div class="step-number">2️⃣</div>
+          <div class="step-content">
+            <h3 class="step-title">Find a Dispensary</h3>
+            <p class="step-description">We'll locate licensed shops near you</p>
+            <button class="step-action">Find Locations</button>
+          </div>
+        </div>
+        
+        <div class="step-item">
+          <div class="step-number">3️⃣</div>
+          <div class="step-content">
+            <h3 class="step-title">Show This Page</h3>
+            <p class="step-description">Present to budtender for expert guidance</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible Learn More Section -->
+    <div class="learn-more-section">
+      <button class="learn-more-toggle" onclick="toggleLearnMore()">
+        📖 Learn More About Your Recommendations ▼
+      </button>
+      
+      <div class="learn-more-content" id="learn-more-content" style="display: none;">
+        <div class="learn-more-grid">
+          <div class="learn-more-card">
+            <div class="card-header">
+              <div class="card-icon">💡</div>
+              <h3 class="card-title">Why These Work for You</h3>
+            </div>
+            <div class="card-content">
+              <p>Loading scientific explanation...</p>
+            </div>
+          </div>
+          
+          <div class="learn-more-card">
+            <div class="card-header">
+              <div class="card-icon">🎯</div>
+              <h3 class="card-title">What to Expect</h3>
+            </div>
+            <div class="card-content">
+              <p>Loading expected outcomes...</p>
+            </div>
+          </div>
+          
+          <div class="learn-more-card">
+            <div class="card-header">
+              <div class="card-icon">📋</div>
+              <h3 class="card-title">Preparation Tips</h3>
+            </div>
+            <div class="card-content">
+              <ul>
+                <li>Loading preparation steps...</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="learn-more-card">
+            <div class="card-header">
+              <div class="card-icon">🏪</div>
+              <h3 class="card-title">Where to Buy</h3>
+            </div>
+            <div class="card-content">
+              <ul>
+                <li>Loading dispensary info...</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="learn-more-card">
+            <div class="card-header">
+              <div class="card-icon">✅</div>
+              <h3 class="card-title">Safety & Quality</h3>
+            </div>
+            <div class="card-content">
+              <ul>
                 <li>✓ Licensed dispensaries only</li>
                 <li>✓ Lab-tested products for purity</li>
                 <li>✓ Expert budtender guidance available</li>
@@ -145,222 +270,47 @@
               </ul>
             </div>
           </div>
-
-          <!-- Footer with Research Link -->
-          <div class="guidance-footer">
-            <div class="footer-badges">
-              <a href="#" class="research-link">📊 Research Insights</a>
+          
+          <div class="learn-more-card">
+            <div class="card-header">
+              <div class="card-icon">🔬</div>
+              <h3 class="card-title">Research & Science</h3>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Three Actionable Contextual Cards -->
-      <div class="guidance-cards-grid">
-        <div class="guidance-card quick-tips-card">
-          <div class="card-header">
-            <div class="card-icon">⚡</div>
-            <h3 class="card-title">Quick Tips</h3>
-          </div>
-          <div class="card-content">
-            <ul class="guidance-list">
-              <li>Loading quick tips...</li>
-            </ul>
-          </div>
-        </div>
-        
-        <div class="guidance-card preparation-card">
-          <div class="card-header">
-            <div class="card-icon">📋</div>
-            <h3 class="card-title">Before You Start</h3>
-          </div>
-          <div class="card-content">
-            <ul class="guidance-list">
-              <li>Loading preparation steps...</li>
-            </ul>
-          </div>
-        </div>
-        
-        <div class="guidance-card where-to-buy-card">
-          <div class="card-header">
-            <div class="card-icon">🏪</div>
-            <h3 class="card-title">Where to Buy</h3>
-          </div>
-          <div class="card-content">
-            <ul class="guidance-list">
-              <li>Loading dispensary info...</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Product Recommendations Section -->
-    <div class="recommendations-section">
-      <div class="recommendations-bridge">
-        <div class="bridge-content">
-          <h2 class="recommendations-heading">Your Perfect Matches</h2>
-          <p class="bridge-text">Ready to find your match? Based on your responses and experience level, we've identified your top 2 products. Each one is chosen specifically for your goals and comfort level.</p>
-          <div class="bridge-indicators">
-            <div class="indicator-item">
-              <span class="indicator-number">1</span>
-              <span class="indicator-label">Personalized for you</span>
-            </div>
-            <div class="indicator-item">
-              <span class="indicator-number">2</span>
-              <span class="indicator-label">Experience-matched</span>
-            </div>
-            <div class="indicator-item">
-              <span class="indicator-number">3</span>
-              <span class="indicator-label">Lab-tested quality</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Enhanced Product Cards -->
-      <div class="product-cards">
-        <div class="enhanced-product-card" data-product-index="0">
-          <div class="product-image-placeholder">
-            <div class="placeholder-gradient"></div>
-            <div class="product-type-badge">Loading...</div>
-            <div class="product-recommendation-badge primary-recommendation">
-              <span class="badge-icon">⭐</span>
-              <span class="badge-text">Best Match</span>
-            </div>
-            <div class="trust-badge lab-tested">
-              <span class="trust-icon">✓</span>
-              <span class="trust-text">Lab Tested</span>
-            </div>
-          </div>
-          <div class="product-info">
-            <div class="product-header">
-              <h3 class="product-name">Loading Product...</h3>
-              <div class="product-rating">
-                <div class="stars">★★★★★</div>
-                <span class="rating-value">0.0</span>
-              </div>
-            </div>
-            <div class="product-details">
-              <div class="potency-display">
-                <div class="potency-item thc">
-                  <span class="potency-label" data-tooltip="THC creates the 'high' feeling. Higher percentages mean stronger effects. New users should start with 5-15%.">
-                    THC
-                    <span class="info-icon">ℹ️</span>
-                  </span>
-                  <span class="potency-value">--%</span>
-                </div>
-                <div class="potency-item cbd">
-                  <span class="potency-label" data-tooltip="CBD provides wellness benefits without the 'high'. Great for relaxation and comfort. Safe for beginners.">
-                    CBD
-                    <span class="info-icon">ℹ️</span>
-                  </span>
-                  <span class="potency-value">--%</span>
-                </div>
-              </div>
-              <div class="strain-info">
-                <span class="strain-label">Strain:</span>
-                <span class="strain-name">Loading...</span>
-              </div>
-              <div class="effects-tags">
-                <span class="effect-tag">Loading</span>
-              </div>
-              <p class="product-description">Loading product description...</p>
-              <div class="why-this-works">
-                <div class="why-header">
-                  <span class="why-icon">🎯</span>
-                  <h4>Why This Works for You</h4>
-                </div>
-                <p class="why-explanation">Loading personalized recommendation...</p>
-              </div>
-            </div>
-            <div class="product-footer">
-              <div class="pricing enhanced-pricing">
-                <span class="price">$--</span>
-                <div class="availability-info">
-                  <span class="availability in-stock">Loading...</span>
-                  <span class="availability-note">Ready for pickup</span>
-                </div>
-              </div>
-              <div class="cta-buttons">
-                <button class="primary-cta get-product-btn">Get This Product ($--)</button>
-                <button class="secondary-cta save-later-btn">Save for Later</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="enhanced-product-card" data-product-index="1">
-          <div class="product-image-placeholder">
-            <div class="placeholder-gradient"></div>
-            <div class="product-type-badge">Loading...</div>
-            <div class="product-recommendation-badge secondary-recommendation">
-              <span class="badge-icon">👥</span>
-              <span class="badge-text">Popular Choice</span>
-            </div>
-            <div class="trust-badge lab-tested">
-              <span class="trust-icon">✓</span>
-              <span class="trust-text">Lab Tested</span>
-            </div>
-          </div>
-          <div class="product-info">
-            <div class="product-header">
-              <h3 class="product-name">Loading Product...</h3>
-              <div class="product-rating">
-                <div class="stars">★★★★★</div>
-                <span class="rating-value">0.0</span>
-              </div>
-            </div>
-            <div class="product-details">
-              <div class="potency-display">
-                <div class="potency-item thc">
-                  <span class="potency-label" data-tooltip="THC creates the 'high' feeling. Higher percentages mean stronger effects. New users should start with 5-15%.">
-                    THC
-                    <span class="info-icon">ℹ️</span>
-                  </span>
-                  <span class="potency-value">--%</span>
-                </div>
-                <div class="potency-item cbd">
-                  <span class="potency-label" data-tooltip="CBD provides wellness benefits without the 'high'. Great for relaxation and comfort. Safe for beginners.">
-                    CBD
-                    <span class="info-icon">ℹ️</span>
-                  </span>
-                  <span class="potency-value">--%</span>
-                </div>
-              </div>
-              <div class="strain-info">
-                <span class="strain-label">Strain:</span>
-                <span class="strain-name">Loading...</span>
-              </div>
-              <div class="effects-tags">
-                <span class="effect-tag">Loading</span>
-              </div>
-              <p class="product-description">Loading product description...</p>
-              <div class="why-this-works">
-                <div class="why-header">
-                  <span class="why-icon">🎯</span>
-                  <h4>Why This Works for You</h4>
-                </div>
-                <p class="why-explanation">Loading personalized recommendation...</p>
-              </div>
-            </div>
-            <div class="product-footer">
-              <div class="pricing enhanced-pricing">
-                <span class="price">$--</span>
-                <div class="availability-info">
-                  <span class="availability in-stock">Loading...</span>
-                  <span class="availability-note">Ready for pickup</span>
-                </div>
-              </div>
-              <div class="cta-buttons">
-                <button class="primary-cta get-product-btn">Get This Product ($--)</button>
-                <button class="secondary-cta save-later-btn">Save for Later</button>
-              </div>
+            <div class="card-content">
+              <a href="#" class="research-link">📊 View Research Insights</a>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    function toggleDetails(productIndex) {
+      const details = document.getElementById(`details-${productIndex}`);
+      const button = event.target;
+      
+      if (details.style.display === 'none') {
+        details.style.display = 'block';
+        button.textContent = 'Show Less ▲';
+      } else {
+        details.style.display = 'none';
+        button.textContent = 'Learn More ▼';
+      }
+    }
+    
+    function toggleLearnMore() {
+      const content = document.getElementById('learn-more-content');
+      const button = document.querySelector('.learn-more-toggle');
+      
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        button.textContent = '📖 Hide Additional Information ▲';
+      } else {
+        content.style.display = 'none';
+        button.textContent = '📖 Learn More About Your Recommendations ▼';
+      }
+    }
+  </script>
 </body>
 </html>

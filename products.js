@@ -30,6 +30,33 @@ class ProductsPageHandler {
       if (storedData) {
         this.responseData = JSON.parse(storedData);
         
+        console.log('=== CHECKING CACHED RESPONSE ===');
+        console.log('Cached AI Response preview:', this.responseData.aiResponse?.substring(0, 100) + '...');
+        
+        // Check if this is old fallback data (contains the fallback text)
+        const isFallbackData = this.responseData.aiResponse && (
+          this.responseData.aiResponse.includes('Your question requires personalized cannabis guidance') ||
+          this.responseData.aiResponse.includes('Your cannabis query needs our full recommendation engine') ||
+          this.responseData.aiResponse.includes('Your advanced cannabis query requires our comprehensive analysis system')
+        );
+        
+        if (isFallbackData) {
+          console.warn('=== DETECTED OLD FALLBACK DATA IN CACHE ===');
+          console.warn('Clearing cache and redirecting to make fresh API call...');
+          
+          // Clear all potential cached data
+          sessionStorage.clear();
+          localStorage.removeItem('OLLAMA_HOST'); // Force reload of config
+          
+          alert('Detected old cached fallback data. Redirecting to homepage to make a fresh API call with the fixed CORS connection.');
+          
+          // Force redirect with immediate execution
+          setTimeout(() => {
+            window.location.replace('index.html');
+          }, 100);
+          return;
+        }
+        
         // Check if data is still fresh (within 30 minutes)
         const dataAge = Date.now() - this.responseData.timestamp;
         const maxAge = 30 * 60 * 1000; // 30 minutes
@@ -63,63 +90,259 @@ class ProductsPageHandler {
       queryText.textContent = displayText;
     }
 
-    // Populate structured sections
-    this.populatePersonalizedRecommendations();
-    this.populateCannabisScience();
-    this.populateConsumptionDosing();
+    // Populate new MVP structured sections
+    this.populateAdaptiveContent();
     // Safety section is static and already populated in HTML
   }
 
-  populatePersonalizedRecommendations() {
-    // Now using the AI-generated response (cannabisScience) for personalized section
-    const aiResponse = this.responseData.cannabisScience;
-    if (!aiResponse) return;
-
-    // Parse AI response into structured sections for better readability
-    const sections = this.parseAIResponseForPersonalized(aiResponse);
-
-    // Update summary text
-    const summaryText = document.querySelector('.summary-text');
-    if (summaryText) {
-      summaryText.textContent = sections.summary || aiResponse.substring(0, 200) + '...';
+  populateAdaptiveContent() {
+    console.log(`=== POPULATING ADAPTIVE CONTENT ===`);
+    
+    // Parse the structured MCP response
+    const aiResponse = this.responseData.aiResponse;
+    console.log(`AI Response type: ${typeof aiResponse}`);
+    console.log(`AI Response length: ${aiResponse?.length || 'N/A'}`);
+    
+    if (!aiResponse) {
+      console.error('No AI response found in responseData');
+      console.log('Full responseData:', this.responseData);
+      return;
     }
 
-    // Update highlight sections with age-inclusive language
-    const highlights = document.querySelectorAll('.highlight-text');
-    if (highlights.length >= 3) {
-      highlights[0].textContent = sections.whyThisWorks || this.getAgeInclusiveFallback('whyThisWorks');
-      highlights[1].textContent = sections.whatToExpect || this.getAgeInclusiveFallback('whatToExpect');
-      highlights[2].textContent = sections.gettingStarted || this.getAgeInclusiveFallback('gettingStarted');
+    // Check if this is a fallback response
+    const isFallbackResponse = aiResponse.includes('Your question requires personalized cannabis guidance') ||
+                              aiResponse.includes('Your cannabis query needs our full recommendation engine') ||
+                              aiResponse.includes('Your advanced cannabis query requires our comprehensive analysis system');
+    
+    if (isFallbackResponse) {
+      console.warn('=== DETECTED FALLBACK RESPONSE ===');
+      console.warn('This means the MCP/Ollama call failed and fell back to generic text');
+      console.warn('Fallback content:', aiResponse);
     }
+
+    // Parse structured sections from MCP response
+    const sections = this.parseStructuredResponse(aiResponse);
+    
+    // Apply experience-level CSS class to main container
+    const mainCard = document.querySelector('.main-response-card');
+    if (mainCard) {
+      mainCard.classList.add(`experience-${this.responseData.experienceLevel}`);
+    }
+
+    // Enhanced debug logging
+    console.log(`=== RESPONSE ANALYSIS ===`);
+    console.log(`AI Response preview:`, aiResponse.substring(0, 300));
+    console.log(`Experience Level:`, this.responseData.experienceLevel);
+    console.log(`Is Fallback Response:`, isFallbackResponse);
+    console.log(`Parsed sections:`, sections);
+    
+    // Populate each section
+    console.log('Populating sections...');
+    this.populateIntroduction(sections.introduction);
+    this.populateCoreTopic(sections.coreTopic);
+    this.populateWhyThisWorks(sections.whyThisWorks);
+    this.populateWhatToExpect(sections.whatToExpect);
+    this.populateGettingStarted(sections.gettingStarted);
+    console.log('Section population complete');
   }
 
-  parseAIResponseForPersonalized(response) {
-    // Smart parsing of AI response to extract key sections
+  parseStructuredResponse(response) {
+    console.log(`=== PARSING STRUCTURED RESPONSE ===`);
+    console.log('Full response length:', response.length);
+    console.log('Response preview:', response.substring(0, 300) + '...');
+    
+    // Parse MCP structured response with section markers
     const sections = {
-      summary: '',
+      introduction: '',
+      coreTopic: '',
       whyThisWorks: '',
       whatToExpect: '',
       gettingStarted: ''
     };
 
-    // Extract first 1-2 sentences as summary
-    const sentences = response.split('. ');
-    sections.summary = sentences.slice(0, 2).join('. ') + '.';
+    // First, try to extract sections using markers
+    console.log('Looking for section markers...');
+    const introMatch = response.match(/\[INTRODUCTION\]\s*([\s\S]*?)(?=\[|$)/);
+    const coreMatch = response.match(/\[CORE_TOPIC\]\s*([\s\S]*?)(?=\[|$)/);
+    const whyMatch = response.match(/\[WHY_THIS_WORKS\]\s*([\s\S]*?)(?=\[|$)/);
+    const expectMatch = response.match(/\[WHAT_TO_EXPECT\]\s*([\s\S]*?)(?=\[|$)/);
+    const startMatch = response.match(/\[GETTING_STARTED\]\s*([\s\S]*?)(?=\[|$)/);
 
-    // Look for key phrases to populate sections
-    if (response.toLowerCase().includes('because') || response.toLowerCase().includes('since')) {
-      sections.whyThisWorks = this.extractSentencesContaining(response, ['because', 'since', 'reason']);
-    }
+    console.log('Section marker matches:', {
+      introMatch: !!introMatch,
+      coreMatch: !!coreMatch,
+      whyMatch: !!whyMatch,
+      expectMatch: !!expectMatch,
+      startMatch: !!startMatch
+    });
+
+    // Check if we found structured sections
+    const hasStructuredContent = introMatch || coreMatch || whyMatch || expectMatch || startMatch;
     
-    if (response.toLowerCase().includes('expect') || response.toLowerCase().includes('feel')) {
-      sections.whatToExpect = this.extractSentencesContaining(response, ['expect', 'feel', 'experience']);
-    }
-
-    if (response.toLowerCase().includes('start') || response.toLowerCase().includes('begin')) {
-      sections.gettingStarted = this.extractSentencesContaining(response, ['start', 'begin', 'first']);
+    if (hasStructuredContent) {
+      console.log('=== FOUND STRUCTURED CONTENT ===');
+      sections.introduction = introMatch ? introMatch[1].trim() : this.getFallbackContent('introduction');
+      sections.coreTopic = coreMatch ? coreMatch[1].trim() : this.getFallbackContent('coreTopic');
+      sections.whyThisWorks = whyMatch ? whyMatch[1].trim() : this.getFallbackContent('whyThisWorks');
+      sections.whatToExpect = expectMatch ? expectMatch[1].trim() : this.getFallbackContent('whatToExpect');
+      sections.gettingStarted = startMatch ? startMatch[1].trim() : this.getFallbackContent('gettingStarted');
+      
+      console.log('Extracted sections:', {
+        introLength: sections.introduction.length,
+        coreLength: sections.coreTopic.length,
+        whyLength: sections.whyThisWorks.length,
+        expectLength: sections.whatToExpect.length,
+        startedLength: sections.gettingStarted.length
+      });
+    } else {
+      console.log('=== NO STRUCTURED MARKERS FOUND ===');
+      console.log('Parsing as unstructured response...');
+      // Parse unstructured response intelligently
+      const unstructuredSections = this.parseUnstructuredResponse(response);
+      sections.introduction = unstructuredSections.introduction;
+      sections.coreTopic = unstructuredSections.coreTopic;
+      sections.whyThisWorks = unstructuredSections.whyThisWorks;
+      sections.whatToExpect = unstructuredSections.whatToExpect;
+      sections.gettingStarted = unstructuredSections.gettingStarted;
     }
 
     return sections;
+  }
+  
+  parseUnstructuredResponse(response) {
+    // Split the response into paragraphs
+    const paragraphs = response.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+    console.log('Parsed paragraphs:', paragraphs.length);
+    
+    const sections = {
+      introduction: '',
+      coreTopic: '',
+      whyThisWorks: '',
+      whatToExpect: '',
+      gettingStarted: ''
+    };
+    
+    // If we have a good amount of content, distribute it across sections
+    if (paragraphs.length >= 3) {
+      sections.introduction = this.createIntroFromResponse(response);
+      sections.coreTopic = paragraphs.slice(0, 2).join(' '); // First 2 paragraphs as core topic
+      
+      // Look for explanatory content
+      sections.whyThisWorks = this.extractExplanation(response);
+      sections.whatToExpect = this.extractExpectations(response);
+      sections.gettingStarted = this.extractActionSteps(response);
+    } else {
+      // If it's a short response, use it as core topic and generate appropriate sections
+      sections.introduction = this.createIntroFromResponse(response);
+      sections.coreTopic = response;
+      sections.whyThisWorks = this.getFallbackContent('whyThisWorks');
+      sections.whatToExpect = this.getFallbackContent('whatToExpect');
+      sections.gettingStarted = this.getFallbackContent('gettingStarted');
+    }
+    
+    return sections;
+  }
+  
+  createIntroFromResponse(response) {
+    // Create a personalized intro based on the response content
+    const experienceLevel = this.responseData.experienceLevel || 'casual';
+    const firstSentence = response.split('.')[0] + '.';
+    
+    if (experienceLevel === 'new') {
+      return `Welcome! I'm here to guide you through your cannabis journey. ${firstSentence}`;
+    } else if (experienceLevel === 'experienced') {
+      return `Based on your experience level, here's my analysis: ${firstSentence}`;
+    } else {
+      return `Great question! Let me provide you with personalized guidance. ${firstSentence}`;
+    }
+  }
+  
+  extractExplanation(response) {
+    // Look for explanatory phrases
+    const explanationKeywords = ['because', 'since', 'due to', 'reason', 'mechanism', 'work by'];
+    const sentences = response.split('. ');
+    
+    for (const sentence of sentences) {
+      if (explanationKeywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+        return sentence + '.';
+      }
+    }
+    
+    return this.getFallbackContent('whyThisWorks');
+  }
+  
+  extractExpectations(response) {
+    // Look for expectation-related content
+    const expectationKeywords = ['expect', 'feel', 'experience', 'within', 'after', 'minutes', 'hours'];
+    const sentences = response.split('. ');
+    
+    for (const sentence of sentences) {
+      if (expectationKeywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+        return sentence + '.';
+      }
+    }
+    
+    return this.getFallbackContent('whatToExpect');
+  }
+  
+  extractActionSteps(response) {
+    // Look for action-oriented content
+    const actionKeywords = ['start', 'begin', 'first', 'try', 'use', 'take', 'dose'];
+    const sentences = response.split('. ');
+    
+    for (const sentence of sentences) {
+      if (actionKeywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+        return sentence + '.';
+      }
+    }
+    
+    return this.getFallbackContent('gettingStarted');
+  }
+
+  populateIntroduction(content) {
+    const introText = document.querySelector('.introduction-text');
+    if (introText) {
+      introText.textContent = content;
+    }
+  }
+
+  populateCoreTopic(content) {
+    const coreTopicText = document.querySelector('.core-topic-text');
+    if (coreTopicText) {
+      coreTopicText.textContent = content;
+    }
+  }
+
+  populateWhyThisWorks(content) {
+    const whyText = document.querySelector('.why-text');
+    if (whyText) {
+      whyText.textContent = content;
+    }
+  }
+
+  populateWhatToExpect(content) {
+    const expectText = document.querySelector('.expect-text');
+    if (expectText) {
+      expectText.textContent = content;
+    }
+  }
+
+  populateGettingStarted(content) {
+    const startedText = document.querySelector('.started-text');
+    if (startedText) {
+      startedText.textContent = content;
+    }
+  }
+
+  getFallbackContent(sectionType) {
+    const fallbacks = {
+      introduction: `Welcome! I'm here to provide you with personalized cannabis guidance based on your ${this.responseData.experienceLevel} experience level.`,
+      coreTopic: "Let me provide you with comprehensive cannabis guidance tailored to your specific needs and experience level.",
+      whyThisWorks: "This approach is recommended based on your experience level and the scientific principles of cannabis interaction with your body.",
+      whatToExpect: "You can expect gradual onset of effects with the recommended approach, allowing you to gauge your response safely.",
+      gettingStarted: "Start with the lowest recommended dose and wait to assess effects before considering any adjustments."
+    };
+    return fallbacks[sectionType] || "Loading personalized guidance...";
   }
 
   extractSentencesContaining(text, keywords) {
@@ -140,58 +363,8 @@ class ProductsPageHandler {
     return fallbacks[section] || "We're here to support you every step of the way.";
   }
 
-  populateCannabisScience() {
-    // Now using the structured personalizedRecommendations data for science section
-    const data = this.responseData.personalizedRecommendations;
-    if (!data) return;
-
-    // Update THC badge
-    const thcValue = document.querySelector('.thc-value');
-    if (thcValue) {
-      thcValue.textContent = data.thcLevel || 'N/A';
-    }
-
-    // Update CBD badge
-    const cbdValue = document.querySelector('.cbd-value');
-    if (cbdValue) {
-      cbdValue.textContent = data.cbdContent || 'N/A';
-    }
-
-    // Update strain match
-    const strainMatch = document.querySelector('.strain-match');
-    if (strainMatch) {
-      strainMatch.textContent = data.bestMatch || 'Loading...';
-    }
-
-    // Update scientific reasoning
-    const scientificReasoning = document.querySelector('.scientific-reasoning');
-    if (scientificReasoning) {
-      // Make the "why these work" explanation more scientific and educational
-      const reasoning = data.whyTheseWork || 'Based on the chemical profile and your needs.';
-      scientificReasoning.textContent = this.makeMoreScientific(reasoning);
-    }
-  }
-
-  makeMoreScientific(explanation) {
-    // Add scientific context to make explanations more educational
-    if (!explanation) return 'Chemical compounds interact with your endocannabinoid system to produce targeted effects.';
-    
-    // Add scientific framing to the explanation
-    const scientificIntro = 'The cannabinoid profile works because ';
-    return scientificIntro + explanation.toLowerCase();
-  }
-
-  populateConsumptionDosing() {
-    const dosingSteps = document.querySelector('.dosing-steps');
-    if (dosingSteps && this.responseData.consumptionDosing) {
-      dosingSteps.innerHTML = '';
-      this.responseData.consumptionDosing.forEach(step => {
-        const li = document.createElement('li');
-        li.textContent = step;
-        dosingSteps.appendChild(li);
-      });
-    }
-  }
+  // Removed unused methods: populateCannabisScience, makeMoreScientific, populateConsumptionDosing
+  // These were for the old section structure that has been replaced with the new MVP flow
 
   populateGuidanceCards() {
     const guidanceCards = document.querySelectorAll('.guidance-card');
