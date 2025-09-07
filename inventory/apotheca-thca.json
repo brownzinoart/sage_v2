@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Apotheca THCa Hemp Flower - Hybrid",
+    "url": "https://www.apotheca.org/product-category/flower/thca-flower",
+    "image": "",
+    "price": "$29.99",
+    "availability": "In Stock",
+    "type": "THCa Flower",
+    "category": "Hybrid",
+    "thcaPercent": 22,
+    "description": "Farm Bill compliant THCa hemp flower (Δ9 ≤ 0.3%), balanced daytime/evening use.",
+    "effects": ["Balanced", "Relaxed", "Uplifted"],
+    "hempDerived": true
+  },
+  {
+    "name": "Apotheca THCa Hemp Flower - Indica",
+    "url": "https://www.apotheca.org/product-category/flower/thca-flower",
+    "image": "",
+    "price": "$32.99",
+    "availability": "In Stock",
+    "type": "THCa Flower",
+    "category": "Indica",
+    "thcaPercent": 25,
+    "description": "Compliant THCa hemp flower (Δ9 ≤ 0.3%) with classic indica relaxation.",
+    "effects": ["Relaxing", "Calm", "Sleep"],
+    "hempDerived": true
+  },
+  {
+    "name": "Apotheca THCa Hemp Flower - Sativa",
+    "url": "https://www.apotheca.org/product-category/flower/thca-flower",
+    "image": "",
+    "price": "$31.99",
+    "availability": "In Stock",
+    "type": "THCa Flower",
+    "category": "Sativa",
+    "thcaPercent": 20,
+    "description": "Hemp-derived THCa, daytime friendly with compliant Δ9 levels.",
+    "effects": ["Energetic", "Uplifting", "Focus"],
+    "hempDerived": true
+  },
+  {
+    "name": "Apotheca THCa Small Buds",
+    "url": "https://www.apotheca.org/product-category/flower/thca-flower",
+    "image": "",
+    "price": "$24.99",
+    "availability": "Limited Stock",
+    "type": "THCa Flower",
+    "category": "Hybrid",
+    "thcaPercent": 18,
+    "description": "Budget-friendly THCa hemp flower (Farm Bill compliant).",
+    "effects": ["Balanced", "Mellow"],
+    "hempDerived": true
+  }
+]

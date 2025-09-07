@@ -136,14 +136,10 @@ class ProductsPageHandler {
     console.log(`Is Fallback Response:`, isFallbackResponse);
     console.log(`Parsed sections:`, sections);
     
-    // Populate each section
-    console.log('Populating sections...');
-    this.populateIntroduction(sections.introduction);
-    this.populateCoreTopic(sections.coreTopic);
-    this.populateWhyThisWorks(sections.whyThisWorks);
-    this.populateWhatToExpect(sections.whatToExpect);
-    this.populateGettingStarted(sections.gettingStarted);
-    console.log('Section population complete');
+    // Use enhanced content filter to extract structured data for existing UI
+    console.log('Extracting structured data for existing UI...');
+    this.populateExistingUIElements(aiResponse);
+    console.log('UI population complete');
   }
 
   parseStructuredResponse(response) {
@@ -339,10 +335,365 @@ class ProductsPageHandler {
       introduction: `Welcome! I'm here to provide you with personalized cannabis guidance based on your ${this.responseData.experienceLevel} experience level.`,
       coreTopic: "Let me provide you with comprehensive cannabis guidance tailored to your specific needs and experience level.",
       whyThisWorks: "This approach is recommended based on your experience level and the scientific principles of cannabis interaction with your body.",
-      whatToExpect: "You can expect gradual onset of effects with the recommended approach, allowing you to gauge your response safely.",
+      whatToExpected: "You can expect gradual onset of effects with the recommended approach, allowing you to gauge your response safely.",
       gettingStarted: "Start with the lowest recommended dose and wait to assess effects before considering any adjustments."
     };
     return fallbacks[sectionType] || "Loading personalized guidance...";
+  }
+
+  // Enhanced content filter that maps AI response to existing UI elements
+  populateExistingUIElements(aiResponse) {
+    console.log('=== SMART CONTENT FILTERING FOR EXISTING UI ===');
+    
+    // Extract structured data from AI response
+    const extractedData = this.extractStructuredData(aiResponse);
+    console.log('Extracted data:', extractedData);
+    
+    // Populate personalized recommendations section
+    this.populateRecommendationDetails(extractedData);
+    
+    // Populate science explanation
+    this.populateScienceSection(extractedData);
+    
+    // Populate dosing guidelines  
+    this.populateDosingGuidelines(extractedData);
+    
+    // Populate guidance cards
+    this.populateGuidanceCards(extractedData);
+    
+    // Populate product cards with AI-generated content
+    this.populateProductCards(extractedData);
+  }
+
+  extractStructuredData(response) {
+    console.log('Extracting structured data from AI response...');
+    
+    const data = {
+      thcLevel: this.extractTHCInfo(response),
+      cbdContent: this.extractCBDInfo(response), 
+      bestMatch: this.extractStrainRecommendation(response),
+      whyThisWorks: this.extractExplanation(response),
+      scientificInsights: this.extractScientificContent(response),
+      dosingGuidelines: this.extractDosingInfo(response),
+      quickTips: this.extractQuickTips(response),
+      preparationSteps: this.extractPreparationSteps(response),
+      dispensaryInfo: this.extractDispensaryInfo(response),
+      products: this.extractProductRecommendations(response)
+    };
+    
+    return data;
+  }
+
+  extractTHCInfo(response) {
+    // Look for THC percentage mentions
+    const thcPattern = /(\d+(?:\.\d+)?)\s*-?\s*(\d+(?:\.\d+)?)?\s*%?\s*THC/i;
+    const match = response.match(thcPattern);
+    if (match) {
+      return match[2] ? `${match[1]}-${match[2]}% THC` : `${match[1]}% THC`;
+    }
+    
+    // Look for THC level descriptions
+    if (response.toLowerCase().includes('low thc') || response.toLowerCase().includes('mild')) {
+      return '5-15% THC (Beginner-friendly)';
+    }
+    if (response.toLowerCase().includes('high thc') || response.toLowerCase().includes('potent')) {
+      return '20-25% THC (Experienced users)';
+    }
+    
+    return 'THC levels tailored to your experience';
+  }
+
+  extractCBDInfo(response) {
+    // Look for CBD percentage mentions
+    const cbdPattern = /(\d+(?:\.\d+)?)\s*-?\s*(\d+(?:\.\d+)?)?\s*%?\s*CBD/i;
+    const match = response.match(cbdPattern);
+    if (match) {
+      return match[2] ? `${match[1]}-${match[2]}% CBD` : `${match[1]}% CBD`;
+    }
+    
+    // Look for CBD descriptions
+    if (response.toLowerCase().includes('cbd dominant') || response.toLowerCase().includes('high cbd')) {
+      return '10-20% CBD (Therapeutic focus)';
+    }
+    if (response.toLowerCase().includes('balanced') || response.toLowerCase().includes('1:1')) {
+      return 'Balanced THC:CBD ratio';
+    }
+    
+    return 'CBD content for wellness benefits';
+  }
+
+  extractStrainRecommendation(response) {
+    // Look for specific strain mentions
+    const strainPattern = /(?:strain|variety|cultivar):\s*([^,.!?\n]+)/i;
+    const match = response.match(strainPattern);
+    if (match) {
+      return match[1].trim();
+    }
+    
+    // Look for indica/sativa/hybrid mentions
+    if (response.toLowerCase().includes('indica')) {
+      return 'Indica-dominant strains for relaxation';
+    }
+    if (response.toLowerCase().includes('sativa')) {
+      return 'Sativa-dominant strains for energy';
+    }
+    if (response.toLowerCase().includes('hybrid')) {
+      return 'Hybrid strains for balanced effects';
+    }
+    
+    return 'Strains matched to your goals';
+  }
+
+  extractScientificContent(response) {
+    // Look for scientific explanations
+    const sentences = response.split('. ');
+    const scientificKeywords = ['cannabinoid', 'terpene', 'receptor', 'endocannabinoid', 'mechanism', 'interact', 'bind'];
+    
+    for (const sentence of sentences) {
+      if (scientificKeywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+        return sentence.trim() + '.';
+      }
+    }
+    
+    return 'Cannabis compounds work with your body\'s natural systems to produce therapeutic effects through cannabinoid receptors.';
+  }
+
+  extractDosingInfo(response) {
+    // Look for dosing guidelines
+    const sentences = response.split('. ');
+    const dosingKeywords = ['start', 'dose', 'mg', 'low', 'small', 'begin', 'wait', 'hours'];
+    
+    const dosingSteps = [];
+    for (const sentence of sentences) {
+      if (dosingKeywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+        dosingSteps.push(sentence.trim());
+      }
+    }
+    
+    if (dosingSteps.length > 0) {
+      return dosingSteps;
+    }
+    
+    // Default dosing based on experience level
+    const experience = this.responseData.experienceLevel;
+    if (experience === 'new') {
+      return ['Start with 2.5-5mg THC', 'Wait 2-3 hours before additional doses', 'Increase gradually over multiple sessions'];
+    } else if (experience === 'casual') {
+      return ['Start with 5-10mg THC', 'Wait 1-2 hours to assess effects', 'Adjust based on your tolerance'];
+    } else {
+      return ['Start with your usual dose', 'Monitor effects and adjust as needed', 'Consider tolerance breaks if needed'];
+    }
+  }
+
+  extractQuickTips(response) {
+    const tips = [];
+    const sentences = response.split('. ');
+    const tipKeywords = ['tip', 'important', 'remember', 'avoid', 'ensure', 'always'];
+    
+    for (const sentence of sentences) {
+      if (tipKeywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+        tips.push(sentence.trim());
+      }
+    }
+    
+    // Add experience-level specific tips
+    const experience = this.responseData.experienceLevel;
+    if (experience === 'new') {
+      tips.push('Start low and go slow');
+      tips.push('Have snacks and water ready');
+      tips.push('Stay in a comfortable environment');
+    } else {
+      tips.push('Consider your tolerance level');
+      tips.push('Choose quality over quantity');
+      tips.push('Track your experiences');
+    }
+    
+    return tips.slice(0, 3); // Limit to 3 tips
+  }
+
+  extractPreparationSteps(response) {
+    const steps = [];
+    const sentences = response.split('. ');
+    const prepKeywords = ['prepare', 'before', 'ready', 'set up', 'ensure', 'plan'];
+    
+    for (const sentence of sentences) {
+      if (prepKeywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+        steps.push(sentence.trim());
+      }
+    }
+    
+    // Add standard preparation steps
+    steps.push('Choose a comfortable, safe environment');
+    steps.push('Clear your schedule for 3-4 hours');
+    steps.push('Have water and healthy snacks available');
+    
+    return steps.slice(0, 3);
+  }
+
+  extractDispensaryInfo(response) {
+    const info = [];
+    
+    // Look for dispensary-related content
+    const sentences = response.split('. ');
+    const dispensaryKeywords = ['dispensary', 'budtender', 'licensed', 'shop', 'store'];
+    
+    for (const sentence of sentences) {
+      if (dispensaryKeywords.some(keyword => sentence.toLowerCase().includes(keyword))) {
+        info.push(sentence.trim());
+      }
+    }
+    
+    // Add standard dispensary guidance
+    info.push('Visit licensed dispensaries only');
+    info.push('Ask budtenders for product recommendations');
+    info.push('Verify lab testing and certificates');
+    
+    return info.slice(0, 3);
+  }
+
+  extractProductRecommendations(response) {
+    // Generate product data based on AI response
+    const experience = this.responseData.experienceLevel;
+    
+    const products = [
+      {
+        name: this.generateProductName(response, 0),
+        strain: this.extractStrainRecommendation(response) || 'Hybrid',
+        effects: this.extractEffects(response, 0),
+        thc: this.extractTHCInfo(response) || this.getDefaultTHC(experience),
+        cbd: this.extractCBDInfo(response) || this.getDefaultCBD(experience),
+        description: this.generateProductDescription(response, 0),
+        whyThisWorks: this.extractPersonalizedReason(response, 0),
+        price: '$25-45',
+        availability: 'In Stock'
+      },
+      {
+        name: this.generateProductName(response, 1),
+        strain: this.getAlternativeStrain(response),
+        effects: this.extractEffects(response, 1),
+        thc: this.getAlternativeTHC(experience),
+        cbd: this.getAlternativeCBD(experience),
+        description: this.generateProductDescription(response, 1),
+        whyThisWorks: this.extractPersonalizedReason(response, 1),
+        price: '$30-50',
+        availability: 'In Stock'
+      }
+    ];
+    
+    return products;
+  }
+
+  // Helper methods for product generation
+  generateProductName(response, index) {
+    const strainTypes = ['Relaxing', 'Energizing', 'Balanced', 'Therapeutic', 'Premium'];
+    const products = ['Flower', 'Edibles', 'Vape', 'Tincture', 'Capsules'];
+    
+    if (response.toLowerCase().includes('flower') || response.toLowerCase().includes('smoke')) {
+      return `${strainTypes[index]} Cannabis Flower`;
+    }
+    if (response.toLowerCase().includes('edible') || response.toLowerCase().includes('gummy')) {
+      return `${strainTypes[index]} Cannabis Edibles`;
+    }
+    if (response.toLowerCase().includes('vape') || response.toLowerCase().includes('cartridge')) {
+      return `${strainTypes[index]} Vape Cartridge`;
+    }
+    
+    return `${strainTypes[index]} ${products[index % products.length]}`;
+  }
+
+  extractEffects(response, index) {
+    const allEffects = ['Relaxing', 'Energizing', 'Focus', 'Creative', 'Social', 'Sleep', 'Pain Relief', 'Anxiety Relief'];
+    
+    // Look for effect mentions in response
+    const foundEffects = allEffects.filter(effect => 
+      response.toLowerCase().includes(effect.toLowerCase())
+    );
+    
+    if (foundEffects.length > 0) {
+      return foundEffects[index % foundEffects.length];
+    }
+    
+    return allEffects[index % allEffects.length];
+  }
+
+  getDefaultTHC(experience) {
+    return {
+      'new': '5-10% THC',
+      'casual': '15-20% THC', 
+      'experienced': '20-25% THC'
+    }[experience] || '15% THC';
+  }
+
+  getDefaultCBD(experience) {
+    return {
+      'new': '5-15% CBD',
+      'casual': '2-8% CBD',
+      'experienced': '<2% CBD'
+    }[experience] || '5% CBD';
+  }
+
+  getAlternativeStrain(response) {
+    if (response.toLowerCase().includes('indica')) {
+      return 'Hybrid (Balanced)';
+    }
+    if (response.toLowerCase().includes('sativa')) {
+      return 'Indica (Relaxing)';
+    }
+    return 'Sativa (Energizing)';
+  }
+
+  getAlternativeTHC(experience) {
+    return {
+      'new': '2.5-7.5% THC',
+      'casual': '12-18% THC',
+      'experienced': '18-22% THC'
+    }[experience] || '12% THC';
+  }
+
+  getAlternativeCBD(experience) {
+    return {
+      'new': '8-20% CBD',
+      'casual': '5-12% CBD', 
+      'experienced': '1-5% CBD'
+    }[experience] || '8% CBD';
+  }
+
+  generateProductDescription(response, index) {
+    const sentences = response.split('. ').filter(s => s.length > 20);
+    if (sentences.length > index) {
+      return sentences[index].trim() + '.';
+    }
+    
+    const experience = this.responseData.experienceLevel;
+    const defaults = {
+      'new': ['Perfect for beginners with gentle, predictable effects.', 'Mild potency designed for comfortable first experiences.'],
+      'casual': ['Great balance of effects for regular users.', 'Reliable option that delivers consistent results.'],
+      'experienced': ['Premium quality for connoisseurs.', 'Complex profile with nuanced effects.']
+    };
+    
+    return defaults[experience][index] || 'High-quality cannabis product from licensed dispensaries.';
+  }
+
+  extractPersonalizedReason(response, index) {
+    const sentences = response.split('. ');
+    const reasonKeywords = ['because', 'since', 'ideal', 'perfect', 'suitable', 'recommended'];
+    
+    const reasons = sentences.filter(sentence =>
+      reasonKeywords.some(keyword => sentence.toLowerCase().includes(keyword))
+    );
+    
+    if (reasons.length > index) {
+      return reasons[index].trim() + '.';
+    }
+    
+    const experience = this.responseData.experienceLevel;
+    const defaults = {
+      'new': ['Gentle introduction to cannabis with minimal side effects.', 'Safe starting point to understand your tolerance.'],
+      'casual': ['Matches your experience level with reliable effects.', 'Provides the benefits you\'re looking for.'],
+      'experienced': ['Sophisticated option that meets your standards.', 'Advanced formulation for discerning users.']
+    };
+    
+    return defaults[experience][index] || 'Carefully selected based on your preferences and experience level.';
   }
 
   extractSentencesContaining(text, keywords) {
@@ -449,13 +800,7 @@ class ProductsPageHandler {
     // Update effects tags
     const effectsTags = card.querySelector('.effects-tags');
     if (effectsTags && product.effects) {
-      effectsTags.innerHTML = '';
-      product.effects.forEach(effect => {
-        const tag = document.createElement('span');
-        tag.className = 'effect-tag';
-        tag.textContent = effect;
-        effectsTags.appendChild(tag);
-      });
+      this.renderEffectsTags(effectsTags, product.effects);
     }
 
     // Update description
@@ -517,6 +862,26 @@ class ProductsPageHandler {
         window.open(product.dispensaryUrl, '_blank');
       };
       dispensaryBtn.disabled = false;
+    }
+  }
+
+  // Render up to 3 effect tags; append "+N more" if applicable
+  renderEffectsTags(container, effects) {
+    container.innerHTML = '';
+    const list = Array.isArray(effects) ? effects : (effects ? [effects] : []);
+    const maxTags = 3;
+    list.slice(0, maxTags).forEach(effect => {
+      const tag = document.createElement('span');
+      tag.className = 'effect-tag';
+      tag.textContent = effect;
+      container.appendChild(tag);
+    });
+    const remaining = list.length - maxTags;
+    if (remaining > 0) {
+      const more = document.createElement('span');
+      more.className = 'effect-tag more-tag';
+      more.textContent = `+${remaining} more`;
+      container.appendChild(more);
     }
   }
 
@@ -594,6 +959,190 @@ class ProductsPageHandler {
     // Clear stored data and redirect
     sessionStorage.removeItem('sageResponse');
     window.location.href = 'index.html';
+  }
+
+  // Methods to populate actual UI elements (matching existing HTML structure)
+  populateRecommendationDetails(data) {
+    console.log('Populating recommendation details...');
+    
+    // Update section intro
+    const sectionIntro = document.querySelector('.section-intro');
+    if (sectionIntro) {
+      const experience = this.responseData.experienceLevel;
+      const intro = `Based on your ${experience} experience level, here are your personalized cannabis recommendations:`;
+      sectionIntro.textContent = intro;
+    }
+    
+    // Update THC detail
+    const thcDetail = document.querySelector('.thc-detail');
+    if (thcDetail) {
+      thcDetail.textContent = data.thcLevel;
+    }
+    
+    // Update CBD detail
+    const cbdDetail = document.querySelector('.cbd-detail');
+    if (cbdDetail) {
+      cbdDetail.textContent = data.cbdContent;
+    }
+    
+    // Update best match detail
+    const matchDetail = document.querySelector('.match-detail');
+    if (matchDetail) {
+      matchDetail.textContent = data.bestMatch;
+    }
+    
+    // Update why this works detail
+    const whyDetail = document.querySelector('.why-detail');
+    if (whyDetail) {
+      whyDetail.textContent = data.whyThisWorks;
+    }
+  }
+
+  populateScienceSection(data) {
+    console.log('Populating science section...');
+    
+    const scienceExplanation = document.querySelector('.science-explanation');
+    if (scienceExplanation) {
+      scienceExplanation.textContent = data.scientificInsights;
+    }
+  }
+
+  populateDosingGuidelines(data) {
+    console.log('Populating dosing guidelines...');
+    
+    const dosingList = document.querySelector('.dosing-steps');
+    if (dosingList && data.dosingGuidelines) {
+      dosingList.innerHTML = '';
+      data.dosingGuidelines.forEach(step => {
+        const li = document.createElement('li');
+        li.textContent = step;
+        dosingList.appendChild(li);
+      });
+    }
+  }
+
+  populateGuidanceCards(data) {
+    console.log('Populating guidance cards...');
+    
+    // Populate Quick Tips card
+    const quickTipsList = document.querySelector('.quick-tips-card .guidance-list');
+    if (quickTipsList && data.quickTips) {
+      quickTipsList.innerHTML = '';
+      data.quickTips.forEach(tip => {
+        const li = document.createElement('li');
+        li.textContent = tip;
+        quickTipsList.appendChild(li);
+      });
+    }
+    
+    // Populate Preparation card
+    const prepList = document.querySelector('.preparation-card .guidance-list');
+    if (prepList && data.preparationSteps) {
+      prepList.innerHTML = '';
+      data.preparationSteps.forEach(step => {
+        const li = document.createElement('li');
+        li.textContent = step;
+        prepList.appendChild(li);
+      });
+    }
+    
+    // Populate Where to Buy card
+    const buyList = document.querySelector('.where-to-buy-card .guidance-list');
+    if (buyList && data.dispensaryInfo) {
+      buyList.innerHTML = '';
+      data.dispensaryInfo.forEach(info => {
+        const li = document.createElement('li');
+        li.textContent = info;
+        buyList.appendChild(li);
+      });
+    }
+  }
+
+  populateProductCards(data) {
+    console.log('Populating product cards...');
+    
+    if (!data.products || data.products.length < 2) {
+      console.warn('Insufficient product data');
+      return;
+    }
+    
+    const productCards = document.querySelectorAll('.enhanced-product-card');
+    
+    productCards.forEach((card, index) => {
+      if (index >= data.products.length) return;
+      
+      const product = data.products[index];
+      console.log(`Populating product ${index}:`, product);
+      
+      // Update product name
+      const productName = card.querySelector('.product-name');
+      if (productName) {
+        productName.textContent = product.name;
+      }
+      
+      // Update strain name
+      const strainName = card.querySelector('.strain-name');
+      if (strainName) {
+        strainName.textContent = product.strain;
+      }
+      
+      // Update effect tags (limit for readability)
+      const effectsTags = card.querySelector('.effects-tags');
+      if (effectsTags) {
+        this.renderEffectsTags(effectsTags, product.effects);
+      }
+      
+      // Update THC value
+      const thcValue = card.querySelector('.thc .potency-value');
+      if (thcValue) {
+        thcValue.textContent = product.thc;
+      }
+      
+      // Update CBD value
+      const cbdValue = card.querySelector('.cbd .potency-value');
+      if (cbdValue) {
+        cbdValue.textContent = product.cbd;
+      }
+      
+      // Update product description
+      const productDescription = card.querySelector('.product-description');
+      if (productDescription) {
+        productDescription.textContent = product.description;
+      }
+      
+      // Update why this works explanation
+      const whyExplanation = card.querySelector('.why-explanation');
+      if (whyExplanation) {
+        whyExplanation.textContent = product.whyThisWorks;
+      }
+      
+      // Update pricing
+      const price = card.querySelector('.price');
+      if (price) {
+        price.textContent = product.price;
+      }
+      
+      // Update availability
+      const availability = card.querySelector('.availability');
+      if (availability) {
+        availability.textContent = product.availability;
+        availability.className = `availability ${product.availability.toLowerCase().replace(' ', '-')}`;
+      }
+      
+      // Update product type badge
+      const typeBadge = card.querySelector('.product-type-badge');
+      if (typeBadge) {
+        if (product.name.toLowerCase().includes('flower')) {
+          typeBadge.textContent = 'Flower';
+        } else if (product.name.toLowerCase().includes('edible')) {
+          typeBadge.textContent = 'Edibles';
+        } else if (product.name.toLowerCase().includes('vape')) {
+          typeBadge.textContent = 'Vape';
+        } else {
+          typeBadge.textContent = 'Premium';
+        }
+      }
+    });
   }
 
 }

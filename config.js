@@ -9,7 +9,13 @@
 class Config {
   constructor() {
     this.config = {
-      OLLAMA_HOST: 'http://localhost:11435'  // CORS proxy port
+      OLLAMA_HOST: 'http://localhost:11435',  // CORS proxy port
+      // Dispensary/inventory source configuration
+      DISPENSARY_SOURCE: 'static',            // 'static' | 'apotheca' | 'none'
+      // Default static inventory path (served alongside the app)
+      INVENTORY_SOURCE_URL: './inventory/apotheca-thca.json',
+      // Optional proxy for live inventory fetches (if/when enabled)
+      INVENTORY_PROXY: ''
     };
     this.loadConfig();
   }
@@ -86,6 +92,16 @@ class Config {
     this.config[key] = value;
     if (key === 'OLLAMA_HOST') {
       localStorage.setItem('OLLAMA_HOST', value);
+    }
+    // Allow overriding inventory settings via localStorage for quick tests
+    if (key === 'DISPENSARY_SOURCE') {
+      localStorage.setItem('DISPENSARY_SOURCE', value);
+    }
+    if (key === 'INVENTORY_SOURCE_URL') {
+      localStorage.setItem('INVENTORY_SOURCE_URL', value);
+    }
+    if (key === 'INVENTORY_PROXY') {
+      localStorage.setItem('INVENTORY_PROXY', value);
     }
   }
 

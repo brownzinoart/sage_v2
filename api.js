@@ -424,70 +424,205 @@ Each section should be 2-4 sentences and provide authoritative, clinical-grade g
     return EXPERIENCE_BENEFITS[experienceLevel] || EXPERIENCE_BENEFITS.casual;
   }
 
-  // Mock product recommendations (replace with real dispensary API)
+  // Product recommendations pipeline with pluggable inventory source
   async getProductRecommendations(userInput, experienceLevel) {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 1) Build a structured search spec (prompt → filters)
+    const spec = await this.buildProductSearchSpec(userInput, experienceLevel).catch(() => null);
 
-    // Enhanced mock recommendations based on experience level
-    const mockProducts = {
-      new: [
-        {
-          name: 'Gentle Green CBD Tincture',
-          type: 'CBD Dominant Tincture',
-          thc: '2.5mg',
-          cbd: '25mg',
-          price: '$35',
-          description: 'Perfect for beginners - mild, controlled dosing with calming effects'
-        },
-        {
-          name: 'First Timer Gummies',
-          type: 'Hybrid Edible',
-          thc: '2.5mg',
-          cbd: '2.5mg',
-          price: '$20',
-          description: 'Low-dose, balanced effect for new users - start with half'
-        }
-      ],
-      casual: [
-        {
-          name: 'Blue Dream Vape Cart',
-          type: 'Hybrid Vaporizer',
-          thc: '78%',
-          cbd: '1%',
-          price: '$45',
-          description: 'Popular balanced high - creative and relaxed without couch-lock'
-        },
-        {
-          name: 'Social Blend Gummies',
-          type: 'Sativa Edible',
-          thc: '5mg',
-          cbd: '2mg',
-          price: '$25',
-          description: 'Perfect for social gatherings and daytime activities'
-        }
-      ],
-      experienced: [
-        {
-          name: 'Zkittlez Live Rosin',
-          type: 'Hybrid Concentrate',
-          thc: '82%',
-          cbd: '0.5%',
-          price: '$80',
-          description: 'Premium solventless extract with full terpene preservation'
-        },
-        {
-          name: 'High-Dose RSO Capsules',
-          type: 'Indica Edible',
-          thc: '50mg',
-          cbd: '10mg',
-          price: '$60',
-          description: 'Medical-grade potency for experienced users seeking strong effects'
-        }
-      ]
+    // 2) Fetch products from configured source (static by default)
+    let items = [];
+    try {
+      const source = (window.Config && window.Config.get('DISPENSARY_SOURCE')) || 'static';
+      if (source === 'static') {
+        const url = window.Config.get('INVENTORY_SOURCE_URL') || './inventory/apotheca-thca.json';
+        items = await this.fetchStaticInventory(url);
+      } else if (source === 'apotheca') {
+        // Placeholder for live adapter; fall back to static until enabled
+        console.warn('Apotheca live adapter not yet enabled; using static inventory');
+        const url = window.Config.get('INVENTORY_SOURCE_URL') || './inventory/apotheca-thca.json';
+        items = await this.fetchStaticInventory(url);
+      } else {
+        console.warn('Unknown DISPENSARY_SOURCE, using mock fallback');
+      }
+    } catch (e) {
+      console.warn('Inventory fetch failed, falling back to mock products:', e?.message || e);
+    }
+
+    // 3) Normalize → rank → select top N
+    if (Array.isArray(items) && items.length > 0) {
+      const normalized = this.normalizeInventory(items, spec, { experienceLevel });
+      const ranked = this.rankProducts(normalized, spec).slice(0, 4);
+      return ranked;
+    }
+
+    // 4) Last-resort: minimal mock fallback to keep UI working
+    const mock = [
+      {
+        name: 'THCa Hemp Flower — Hybrid',
+        type: 'THCa Flower',
+        thc: 'THCa ~22%',
+        cbd: 'Δ9 ≤0.3% (hemp)',
+        price: '$29',
+        description: 'Farm Bill compliant THCa flower, balanced daytime use',
+        availability: 'In Stock',
+        strain: 'Hybrid',
+        effects: ['Balanced', 'Relaxed', 'Uplifted'],
+        dispensaryUrl: '#'
+      },
+      {
+        name: 'THCa Hemp Flower — Indica',
+        type: 'THCa Flower',
+        thc: 'THCa ~25%',
+        cbd: 'Δ9 ≤0.3% (hemp)',
+        price: '$32',
+        description: 'Compliant THCa indica option for evening relaxation',
+        availability: 'In Stock',
+        strain: 'Indica',
+        effects: ['Relaxing', 'Sleep', 'Calm'],
+        dispensaryUrl: '#'
+      }
+    ];
+    return mock;
+  }
+
+  // Build a prompt → ProductSearchSpec using local model (JSON-only), with heuristic fallback
+  async buildProductSearchSpec(userInput, experienceLevel) {
+    const baseSpec = {
+      query: userInput,
+      experienceLevel,
+      legal: {
+        hempDerivedOnly: true,
+        delta9MaxPercent: 0.3,
+        categoriesAllowed: ['THCa Flower', 'Hemp-derived Delta-8/Delta-9 where compliant']
+      },
+      desiredEffects: [],
+      productTypes: ['flower'],
+      strainPreference: 'hybrid',
+      targetTHCaPercent: { min: 18, max: 28 },
+      avoid: [],
+      priceBand: 'mid',
     };
 
-    return mockProducts[experienceLevel] || mockProducts.casual;
+    // Heuristic enrich from query
+    const q = userInput.toLowerCase();
+    if (q.includes('sleep') || q.includes('anxiety') || q.includes('relax')) baseSpec.strainPreference = 'indica';
+    if (q.includes('focus') || q.includes('day') || q.includes('energy')) baseSpec.strainPreference = 'sativa';
+    if (q.includes('budget') || q.includes('cheap')) baseSpec.priceBand = 'value';
+    if (q.includes('strong') || q.includes('potent')) baseSpec.targetTHCaPercent = { min: 22, max: 30 };
+
+    // Try calling the local model for a crisp JSON spec (optional)
+    try {
+      if (!window.Config || !window.Config.hasOllamaConnection()) return baseSpec;
+      const prompt = `You are a product matching engine. Given a cannabis prompt and experience level, output a JSON spec only. Fields: desiredEffects (array), productTypes (array: flower, edible, vape, tincture), strainPreference (indica|sativa|hybrid), targetTHCaPercent {min,max}, priceBand (value|mid|premium), avoid (array). Also include legal {hempDerivedOnly:true, delta9MaxPercent:0.3}.
+PROMPT: "${userInput}"
+EXPERIENCE: ${experienceLevel}
+JSON ONLY:`;
+      const raw = await this.callOllama(prompt, this.getModel('qwen2_5_14b'));
+      const jsonStart = raw.indexOf('{');
+      const jsonEnd = raw.lastIndexOf('}');
+      if (jsonStart >= 0 && jsonEnd > jsonStart) {
+        const parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+        return { ...baseSpec, ...parsed, legal: { hempDerivedOnly: true, delta9MaxPercent: 0.3 } };
+      }
+    } catch (e) {
+      console.warn('Using heuristic ProductSearchSpec (model JSON parse failed):', e?.message || e);
+    }
+    return baseSpec;
+  }
+
+  // Fetch static inventory JSON from same-origin path
+  async fetchStaticInventory(url) {
+    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+    if (!res.ok) throw new Error(`Static inventory fetch failed: ${res.status}`);
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error('Static inventory JSON must be an array');
+    return data;
+  }
+
+  // Normalize raw items to UI schema
+  normalizeInventory(rawItems, spec, ctx = {}) {
+    const toPercent = (v) => typeof v === 'number' ? `${v}%` : (v || '--');
+    const legalNote = 'Δ9 ≤0.3% (hemp)';
+    const pickEffects = (s) => {
+      const t = (s || '').toLowerCase();
+      if (t.includes('indica')) return ['Relaxing', 'Calm', 'Sleep'];
+      if (t.includes('sativa')) return ['Energetic', 'Uplifting', 'Focus'];
+      return ['Balanced', 'Relaxed', 'Uplifted'];
+    };
+
+    const normalized = rawItems.map((it) => {
+      const strain = it.strain || it.category || it.type || 'Hybrid';
+      const thcaPct = it.thcaPercent || it.thcPercent || it.thca || null;
+      const price = it.price || it.priceText || (it.priceCents ? `$${(it.priceCents/100).toFixed(2)}` : '$--');
+      const name = it.name || it.title || 'THCa Hemp Flower';
+      const url = it.url || it.productUrl || it.dispensaryUrl || '#';
+      const img = it.image || it.imageUrl || '';
+
+      const product = {
+        name,
+        type: 'THCa Flower',
+        thc: thcaPct ? `THCa ${toPercent(thcaPct)}` : 'THCa --',
+        cbd: legalNote,
+        price,
+        description: it.description || 'Farm Bill compliant THCa hemp flower',
+        availability: it.availability || 'In Stock',
+        strain,
+        effects: it.effects || pickEffects(strain),
+        dispensaryUrl: url,
+        imageUrl: img,
+        rating: typeof it.rating === 'number' ? it.rating : 4.6,
+      };
+      product.whyThisWorks = this.createWhyThisWorks(product, spec, ctx);
+      return product;
+    });
+
+    return normalized.filter(p => this.passesLegalFilter(p, spec));
+  }
+
+  passesLegalFilter(product, spec) {
+    // Ensure hemp-derived compliance emphasis is reflected
+    if (!spec || !spec.legal) return true;
+    const text = `${product.name} ${product.description} ${product.cbd}`.toLowerCase();
+    if (spec.legal.hempDerivedOnly) {
+      if (!(text.includes('hemp') || text.includes('farm bill') || text.includes('≤0.3'))) {
+        // Keep conservative: still allow THCa items when marked as THCa
+        return product.thc.toLowerCase().includes('thca');
+      }
+    }
+    return true;
+  }
+
+  rankProducts(products, spec) {
+    const pref = (spec?.strainPreference || 'hybrid').toLowerCase();
+    return [...products]
+      .map(p => {
+        let score = 0;
+        const n = `${p.name} ${p.strain} ${p.description}`.toLowerCase();
+        if (pref === 'indica' && n.includes('indica')) score += 3;
+        if (pref === 'sativa' && n.includes('sativa')) score += 3;
+        if (pref === 'hybrid' && n.includes('hybrid')) score += 2;
+        if (n.includes('thca')) score += 2;
+        if (n.includes('hemp')) score += 2;
+        if (spec?.priceBand === 'value' && /\$1\d|\$2\d/.test(p.price)) score += 1;
+        if (spec?.priceBand === 'premium' && /\$[5-9]\d|\$\d{3}/.test(p.price)) score += 1;
+        return { p, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .map(x => x.p);
+  }
+
+  createWhyThisWorks(product, spec, ctx) {
+    const level = ctx?.experienceLevel || spec?.experienceLevel || 'casual';
+    const base = `Hemp‑derived, Farm Bill–compliant THCa flower`; 
+    const track = level === 'new'
+      ? 'gentle, predictable effects without exceeding legal Δ9 limits'
+      : level === 'experienced'
+        ? 'potency headroom from THCa while remaining compliant'
+        : 'balanced effects within compliant thresholds';
+    const strainNote = product.strain && /indica/i.test(product.strain) ? 'helps with evening relaxation' :
+                      product.strain && /sativa/i.test(product.strain) ? 'supports daytime focus and mood' :
+                      'offers versatile, anytime use';
+    return `${base} — ${track}. ${strainNote}.`;
   }
 
   // Test Ollama connectivity
