@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sage Analytics Dashboard</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/design_system.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/dashboard-components.css">
+  <link rel="stylesheet" href="css/dashboard-responsive.css">
+  
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+</head>
+
+<body class="dashboard-theme">
+  <!-- App Container -->
+  <div id="app" class="app">
+    
+    <!-- Mobile Sidebar Toggle -->
+    <button class="sidebar-toggle" aria-label="Toggle sidebar">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay"></div>
+    
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar">
+      <header class="sidebar-header">
+        <div class="brand">
+          <span class="brand-icon">🌿</span>
+          <span class="brand-text">Sage</span>
+        </div>
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+          <span class="toggle-icon"></span>
+        </button>
+      </header>
+      
+      <nav class="sidebar-nav">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="#overview" class="nav-link active" data-section="overview">
+              <span class="nav-icon">📊</span>
+              <span class="nav-text">Overview</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#analytics" class="nav-link" data-section="analytics">
+              <span class="nav-icon">📈</span>
+              <span class="nav-text">Analytics</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#products" class="nav-link" data-section="products">
+              <span class="nav-icon">🌱</span>
+              <span class="nav-text">Products</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#users" class="nav-link" data-section="users">
+              <span class="nav-icon">👥</span>
+              <span class="nav-text">Users</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#insights" class="nav-link" data-section="insights">
+              <span class="nav-icon">💡</span>
+              <span class="nav-text">Insights</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <footer class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar">GV</div>
+          <div class="user-info">
+            <div class="user-name">Green Valley</div>
+            <div class="user-role">Dispensary</div>
+          </div>
+        </div>
+      </footer>
+    </aside>
+    
+    <!-- Main Content -->
+    <main id="main" class="main">
+      
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 class="page-title">Analytics Overview</h1>
+          <div class="breadcrumb">
+            <span class="breadcrumb-item">Dashboard</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item current">Overview</span>
+          </div>
+        </div>
+        
+        <div class="topbar-center">
+          <div class="date-range-selector">
+            <button class="date-btn active" data-range="today">Today</button>
+            <button class="date-btn" data-range="7d">7 Days</button>
+            <button class="date-btn" data-range="30d">30 Days</button>
+            <button class="date-btn" data-range="custom">Custom</button>
+          </div>
+        </div>
+        
+        <div class="topbar-right">
+          <div class="topbar-actions">
+            <button class="action-btn" data-action="refresh" aria-label="Refresh data">
+              <span class="action-icon">🔄</span>
+            </button>
+            <button class="action-btn" data-action="export" aria-label="Export data">
+              <span class="action-icon">📊</span>
+            </button>
+            <button class="action-btn" data-action="settings" aria-label="Settings">
+              <span class="action-icon">⚙️</span>
+            </button>
+            <button class="action-btn right-panel-toggle" aria-label="Toggle panel">
+              <span class="action-icon">📋</span>
+            </button>
+            <div class="live-status connection-status">
+              <div class="status-dot connected"></div>
+              <span class="status-text">Live</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Content Area -->
+      <div class="content">
+        
+        <!-- KPI Cards -->
+        <section class="kpi-section">
+          <div class="kpi-grid">
+            <article class="kpi-card primary-card">
+              <header class="kpi-header">
+                <div class="kpi-icon">💰</div>
+                <div class="kpi-meta">
+                  <h3 class="kpi-title">Revenue</h3>
+                  <span class="kpi-subtitle">from Sage referrals</span>
+                </div>
+              </header>
+              <div class="kpi-value">
+                <span class="kpi-number" id="revenue-kpi">$0</span>
+                <div class="kpi-change positive">
+                  <span class="change-icon">↗</span>
+                  <span class="change-text">+12.5%</span>
+                </div>
+              </div>
+              <div class="kpi-sparkline">
+                <canvas id="revenue-sparkline" width="120" height="30"></canvas>
+              </div>
+            </article>
+            
+            <article class="kpi-card">
+              <header class="kpi-header">
+                <div class="kpi-icon">👥</div>
+                <div class="kpi-meta">
+                  <h3 class="kpi-title">Active Users</h3>
+                  <span class="kpi-subtitle">last 24 hours</span>
+                </div>
+              </header>
+              <div class="kpi-value">
+                <span class="kpi-number" id="users-kpi">0</span>
+                <div class="kpi-change positive">
+                  <span class="change-icon">↗</span>
+                  <span class="change-text">+23</span>
+                </div>
+              </div>
+              <div class="kpi-sparkline">
+                <canvas id="users-sparkline" width="120" height="30"></canvas>
+              </div>
+            </article>
+            
+            <article class="kpi-card">
+              <header class="kpi-header">
+                <div class="kpi-icon">🎯</div>
+                <div class="kpi-meta">
+                  <h3 class="kpi-title">Conversion</h3>
+                  <span class="kpi-subtitle">query to purchase</span>
+                </div>
+              </header>
+              <div class="kpi-value">
+                <span class="kpi-number" id="conversion-kpi">0%</span>
+                <div class="kpi-change positive">
+                  <span class="change-icon">↗</span>
+                  <span class="change-text">+2.3%</span>
+                </div>
+              </div>
+              <div class="kpi-sparkline">
+                <canvas id="conversion-sparkline" width="120" height="30"></canvas>
+              </div>
+            </article>
+            
+            <article class="kpi-card">
+              <header class="kpi-header">
+                <div class="kpi-icon">🛒</div>
+                <div class="kpi-meta">
+                  <h3 class="kpi-title">Avg Order</h3>
+                  <span class="kpi-subtitle">per transaction</span>
+                </div>
+              </header>
+              <div class="kpi-value">
+                <span class="kpi-number" id="aov-kpi">$0</span>
+                <div class="kpi-change neutral">
+                  <span class="change-icon">→</span>
+                  <span class="change-text">steady</span>
+                </div>
+              </div>
+              <div class="kpi-sparkline">
+                <canvas id="aov-sparkline" width="120" height="30"></canvas>
+              </div>
+            </article>
+          </div>
+        </section>
+        
+        <!-- Charts Section -->
+        <section class="charts-section">
+          <div class="charts-grid">
+            
+            <!-- Revenue Chart -->
+            <article class="chart-card large-chart">
+              <header class="chart-header">
+                <h3 class="chart-title">Revenue Trend</h3>
+                <div class="chart-controls">
+                  <button class="chart-control-btn" data-chart="revenue" data-view="daily">Daily</button>
+                  <button class="chart-control-btn active" data-chart="revenue" data-view="weekly">Weekly</button>
+                  <button class="chart-control-btn" data-chart="revenue" data-view="monthly">Monthly</button>
+                </div>
+              </header>
+              <div class="chart-container">
+                <canvas id="revenue-chart"></canvas>
+              </div>
+            </article>
+            
+            <!-- Conversion Funnel Chart -->
+            <article class="chart-card">
+              <header class="chart-header">
+                <h3 class="chart-title">Conversion Funnel</h3>
+              </header>
+              <div class="chart-container">
+                <canvas id="conversion-chart"></canvas>
+              </div>
+            </article>
+            
+            <!-- Traffic Sources Chart -->
+            <article class="chart-card">
+              <header class="chart-header">
+                <h3 class="chart-title">Traffic Sources</h3>
+              </header>
+              <div class="chart-container">
+                <canvas id="traffic-chart"></canvas>
+              </div>
+            </article>
+            
+            <!-- Sales Performance Chart -->
+            <article class="chart-card">
+              <header class="chart-header">
+                <h3 class="chart-title">Sales vs Target</h3>
+                <div class="chart-controls">
+                  <button class="chart-control-btn active" data-action="current">Current</button>
+                  <button class="chart-control-btn" data-action="previous">Previous</button>
+                </div>
+              </header>
+              <div class="chart-container">
+                <canvas id="sales-chart"></canvas>
+              </div>
+            </article>
+            
+            <!-- Performance Radar Chart -->
+            <article class="chart-card">
+              <header class="chart-header">
+                <h3 class="chart-title">Performance Metrics</h3>
+              </header>
+              <div class="chart-container">
+                <canvas id="performance-chart"></canvas>
+              </div>
+            </article>
+            
+            <!-- Activity Heatmap removed per request -->
+            
+          </div>
+        </section>
+        
+        <!-- Data Table Section -->
+        <section class="table-section">
+          <article class="data-card">
+            <header class="data-header">
+              <h3 class="data-title">Recent Transactions</h3>
+              <div class="data-controls">
+                <input type="search" class="search-input" placeholder="Search transactions...">
+                <select class="filter-select">
+                  <option value="all">All Types</option>
+                  <option value="purchase">Purchases</option>
+                  <option value="query">Queries</option>
+                  <option value="view">Product Views</option>
+                </select>
+              </div>
+            </header>
+            <div class="data-container">
+              <table class="data-table" id="transactions-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Product</th>
+                    <th>User Level</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="transactions-body">
+                  <!-- Dynamic content -->
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+        
+      </div>
+    </main>
+    
+    <!-- Right Panel -->
+    <aside id="rightPanel" class="right-panel collapsed">
+      <header class="panel-header">
+        <h3 class="panel-title">Activity & Insights</h3>
+        <button id="panel-toggle" class="panel-toggle" aria-label="Toggle panel">
+          <span class="toggle-icon">→</span>
+        </button>
+      </header>
+      
+      <div class="panel-content">
+        
+        <!-- Live Activity Feed -->
+        <section class="activity-section">
+          <h4 class="section-title">Live Activity</h4>
+          <div class="activity-feed" id="activity-feed">
+            <!-- Dynamic activity items -->
+          </div>
+        </section>
+        
+        <!-- AI Insights -->
+        <section class="insights-section">
+          <h4 class="section-title">AI Insights</h4>
+          <div class="insights-list" id="insights-list">
+            
+            <article class="insight-card trending">
+              <div class="insight-icon">📈</div>
+              <div class="insight-content">
+                <h5 class="insight-title">Trending Up</h5>
+                <p class="insight-text">THCa Flower sales up 32% after Sage recommendations for anxiety relief queries.</p>
+                <button class="insight-action">View Details</button>
+              </div>
+            </article>
+            
+            <article class="insight-card warning">
+              <div class="insight-icon">⚠️</div>
+              <div class="insight-content">
+                <h5 class="insight-title">Stock Alert</h5>
+                <p class="insight-text">Blue Dream running low. 87% of sleep-related queries recommend this strain.</p>
+                <button class="insight-action">Reorder Now</button>
+              </div>
+            </article>
+            
+            <article class="insight-card opportunity">
+              <div class="insight-icon">💡</div>
+              <div class="insight-content">
+                <h5 class="insight-title">Opportunity</h5>
+                <p class="insight-text">23% of new users asking about CBD. Consider expanding CBD product line.</p>
+                <button class="insight-action">Explore</button>
+              </div>
+            </article>
+            
+          </div>
+        </section>
+        
+        <!-- ROI Summary -->
+        <section class="roi-section">
+          <h4 class="section-title">Partnership ROI</h4>
+          <div class="roi-card">
+            <div class="roi-stats">
+              <div class="roi-stat">
+                <span class="roi-label">Monthly Investment</span>
+                <span class="roi-value">$500</span>
+              </div>
+              <div class="roi-stat">
+                <span class="roi-label">Generated Revenue</span>
+                <span class="roi-value">$18,293</span>
+              </div>
+              <div class="roi-stat primary">
+                <span class="roi-label">ROI</span>
+                <span class="roi-value">3,658%</span>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+      </div>
+    </aside>
+    
+  </div>
+  
+  <!-- Success Notification -->
+  <div id="success-notification" class="notification success hidden">
+    <div class="notification-content">
+      <div class="notification-icon">🎉</div>
+      <div class="notification-text">
+        <h4 class="notification-title">New Sale!</h4>
+        <p class="notification-message">$89.50 from Sage referral</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading dashboard...</p>
+  </div>
+  
+  <!-- JavaScript Modules -->
+  <script type="module">
+    console.log('🚀 Starting dashboard initialization...');
+    
+    try {
+      const DashboardApp = (await import('./js/dashboard-app.js')).default;
+      console.log('✅ DashboardApp module loaded');
+      
+      // Initialize dashboard
+      window.dashboard = new DashboardApp();
+      console.log('✅ Dashboard initialized');
+      
+    } catch (error) {
+      console.error('❌ Dashboard initialization failed:', error);
+      
+      // Hide loading overlay on error
+      const loadingOverlay = document.getElementById('loading-overlay');
+      if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+      }
+      
+      // Show error message
+      document.body.innerHTML += `
+        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                    background: #dc2626; color: white; padding: 20px; border-radius: 8px; z-index: 1000;">
+          <h3>Dashboard Failed to Load</h3>
+          <p>Error: ${error.message}</p>
+          <button onclick="location.reload()" style="background: white; color: #dc2626; border: none; 
+                         padding: 8px 16px; border-radius: 4px; cursor: pointer;">Retry</button>
+        </div>
+      `;
+    }
+  </script>
+  
+</body>
+</html>
